@@ -81,6 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const batches = await storage.getProductionBatches();
       res.json(batches);
     } catch (error) {
+      console.error("Production batches error:", error);
       res.status(500).json({ message: "Failed to fetch production batches" });
     }
   });
@@ -323,6 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(analytics);
     } catch (error) {
+      console.error("Analytics dashboard error:", error);
       res.status(500).json({ message: "Failed to fetch analytics data" });
     }
   });
@@ -351,6 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(monthlyData);
     } catch (error) {
+      console.error("Production analytics error:", error);
       res.status(500).json({ message: "Failed to fetch production analytics" });
     }
   });

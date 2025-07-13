@@ -260,6 +260,119 @@ export class MemStorage implements IStorage {
     defaultMilestones.forEach(milestone => {
       this.createMilestone(milestone);
     });
+
+    // Add some sample production batches
+    const defaultBatches: InsertProductionBatch[] = [
+      {
+        batchNumber: "MYC-2024-001",
+        productType: "Oyster Mushrooms",
+        substrate: "Straw pellets with wheat bran",
+        startDate: new Date("2024-01-15"),
+        expectedHarvestDate: new Date("2024-02-15"),
+        status: "growing",
+        locationId: 1,
+        initialWeight: "5.0",
+        notes: "First commercial batch with new substrate mix",
+      },
+      {
+        batchNumber: "MYC-2024-002", 
+        productType: "Shiitake Mushrooms",
+        substrate: "Oak sawdust with nutrients",
+        startDate: new Date("2024-01-20"),
+        expectedHarvestDate: new Date("2024-03-01"),
+        status: "inoculation",
+        locationId: 1,
+        initialWeight: "3.5",
+        notes: "Premium variety for export market",
+      },
+      {
+        batchNumber: "MYC-2024-003",
+        productType: "Lion's Mane",
+        substrate: "Beech wood chips",
+        startDate: new Date("2024-01-10"),
+        actualHarvestDate: new Date("2024-02-10"),
+        status: "harvested",
+        locationId: 1,
+        initialWeight: "2.0",
+        harvestedWeight: "8.5",
+        contaminationRate: "2.1",
+        notes: "Excellent yield and quality",
+      },
+    ];
+
+    defaultBatches.forEach(batch => {
+      this.createProductionBatch(batch);
+    });
+
+    // Add sample inventory items
+    const defaultInventory: InsertInventory[] = [
+      {
+        itemName: "Straw Pellets",
+        category: "substrate",
+        currentStock: "500",
+        unit: "kg",
+        minimumStock: "100",
+        costPerUnit: "45.00",
+        supplier: "Nepal Agricultural Supplies",
+        locationId: 1,
+      },
+      {
+        itemName: "Oyster Mushroom Spawn",
+        category: "spawn",
+        currentStock: "50",
+        unit: "bags",
+        minimumStock: "10",
+        costPerUnit: "150.00",
+        supplier: "Kathmandu Mushroom Lab",
+        locationId: 1,
+      },
+      {
+        itemName: "Growing Containers",
+        category: "equipment",
+        currentStock: "200",
+        unit: "pieces",
+        minimumStock: "50",
+        costPerUnit: "75.00",
+        supplier: "Local Plastics Co.",
+        locationId: 1,
+      },
+    ];
+
+    defaultInventory.forEach(item => {
+      this.createInventoryItem(item);
+    });
+
+    // Add sample financial transactions
+    const defaultTransactions: InsertFinancialTransaction[] = [
+      {
+        type: "income",
+        amount: "15000.00",
+        description: "Oyster mushroom sales - January",
+        category: "sales",
+        date: new Date("2024-01-25"),
+        locationId: 1,
+      },
+      {
+        type: "expense", 
+        amount: "3500.00",
+        description: "Substrate materials purchase",
+        category: "materials",
+        date: new Date("2024-01-15"),
+        locationId: 1,
+      },
+      {
+        type: "income",
+        amount: "22000.00",
+        description: "Shiitake mushroom premium sales",
+        category: "sales",
+        date: new Date("2024-01-30"),
+        locationId: 1,
+      },
+    ];
+
+    defaultTransactions.forEach(transaction => {
+      this.createFinancialTransaction(transaction);
+    });
   }
 
   // Locations
@@ -1134,4 +1247,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();

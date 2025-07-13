@@ -54,8 +54,8 @@ export default function MilestoneTracker() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Milestone Tracker</CardTitle>
-          <Link href="/tasks">
-            <a className="text-primary text-sm font-medium hover:text-primary/80">Manage</a>
+          <Link href="/tasks" className="text-primary text-sm font-medium hover:text-primary/80">
+            Manage
           </Link>
         </div>
       </CardHeader>

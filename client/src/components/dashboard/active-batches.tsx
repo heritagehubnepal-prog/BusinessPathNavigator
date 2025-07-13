@@ -75,8 +75,8 @@ export default function ActiveBatches() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Active Production Batches</CardTitle>
-          <Link href="/production">
-            <a className="text-primary text-sm font-medium hover:text-primary/80">View All</a>
+          <Link href="/production" className="text-primary text-sm font-medium hover:text-primary/80">
+            View All
           </Link>
         </div>
       </CardHeader>
