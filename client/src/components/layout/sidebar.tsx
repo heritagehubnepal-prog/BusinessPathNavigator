@@ -50,19 +50,17 @@ export default function Sidebar() {
               const Icon = item.icon;
               
               return (
-                <Link key={item.name} href={item.href}>
-                  <a className={cn(
-                    "nav-item",
-                    isActive 
-                      ? "active" 
-                      : "text-gray-300 hover:text-white"
-                  )}>
-                    <Icon className="w-5 h-5" />
-                    <span>{item.name}</span>
-                    {isActive && (
-                      <div className="ml-auto w-2 h-2 bg-green-400 rounded-full pulse-green"></div>
-                    )}
-                  </a>
+                <Link key={item.name} href={item.href} className={cn(
+                  "nav-item",
+                  isActive 
+                    ? "active" 
+                    : "text-gray-300 hover:text-white"
+                )}>
+                  <Icon className="w-5 h-5" />
+                  <span>{item.name}</span>
+                  {isActive && (
+                    <div className="ml-auto w-2 h-2 bg-green-400 rounded-full pulse-green"></div>
+                  )}
                 </Link>
               );
             })}

@@ -591,15 +591,19 @@ export class MemStorage implements IStorage {
 
   async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
     const id = this.currentId++;
+    const orderNumber = `ORD-${Date.now()}-${id}`;
     const order: Order = { 
       ...insertOrder, 
       id, 
+      orderNumber,
       createdAt: new Date(),
       notes: insertOrder.notes || null,
       customerId: insertOrder.customerId || null,
       paidAmount: insertOrder.paidAmount || null,
       paymentMethod: insertOrder.paymentMethod || null,
       shippingAddress: insertOrder.shippingAddress || null,
+      expectedDelivery: insertOrder.expectedDelivery || null,
+      actualDelivery: insertOrder.actualDelivery || null,
       createdBy: insertOrder.createdBy || null,
     };
     this.orders.set(id, order);

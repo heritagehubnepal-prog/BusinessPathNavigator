@@ -231,57 +231,98 @@ export default function Tasks() {
                   <p className="text-gray-500">No milestones found</p>
                 </div>
               ) : (
-                milestones.map((milestone) => (
-                  <div key={milestone.id} className="glass-card p-6 hover:shadow-2xl transition-all duration-300">
-                    <div className="flex items-start space-x-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${getMilestoneIconBg(milestone.status)}`}>
-                        {getMilestoneIcon(milestone.status)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-slate">{milestone.name}</h4>
-                          <span className={`${milestone.status === 'completed' ? 'status-badge-completed' : milestone.status === 'in_progress' ? 'status-badge-progress' : 'status-badge-pending'}`}>
-                            {milestone.status.replace("_", " ").charAt(0).toUpperCase() + milestone.status.replace("_", " ").slice(1)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-4">{milestone.description}</p>
-                        
-                        <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                          <div className="bg-gray-50 p-3 rounded-lg">
-                            <p className="text-gray-500 text-xs mb-1">Target</p>
-                            <p className="font-medium">{milestone.targetValue}</p>
-                          </div>
-                          <div className="bg-gray-50 p-3 rounded-lg">
-                            <p className="text-gray-500 text-xs mb-1">Current</p>
-                            <p className="font-medium">{milestone.currentValue}</p>
+                milestones.map((milestone) => {
+                  const progressPercentage = Math.min(
+                    Math.round((parseFloat(milestone.currentValue || "0") / parseFloat(milestone.targetValue || "1")) * 100),
+                    100
+                  );
+                  
+                  return (
+                    <div key={milestone.id} className="glass-card card-hover p-6 relative overflow-hidden">
+                      {milestone.status === 'completed' && (
+                        <div className="absolute top-4 right-4">
+                          <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center pulse-green">
+                            <Trophy className="w-4 h-4 text-white" />
                           </div>
                         </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg">
-                            <p className="text-xs text-green-600 mb-1">Bonus Amount</p>
-                            <p className="font-bold text-green-700">NPR {parseFloat(milestone.bonusAmount || "0").toLocaleString()}</p>
+                      )}
+                      
+                      <div className="flex items-start space-x-4">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg glow-effect ${getMilestoneIconBg(milestone.status)}`}>
+                          {getMilestoneIcon(milestone.status)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-bold text-lg gradient-text">{milestone.name}</h4>
+                            <span className={`${milestone.status === 'completed' ? 'status-badge-completed' : milestone.status === 'in_progress' ? 'status-badge-progress' : 'status-badge-pending'} shimmer`}>
+                              {milestone.status.replace("_", " ").charAt(0).toUpperCase() + milestone.status.replace("_", " ").slice(1)}
+                            </span>
                           </div>
-                          {milestone.status !== "completed" && (
-                            <Button
-                              onClick={() => updateMilestoneMutation.mutate({ id: milestone.id, status: "completed" })}
-                              disabled={updateMilestoneMutation.isPending}
-                              className="btn-secondary-modern"
-                            >
-                              ✓ Complete
-                            </Button>
+                          <p className="text-sm text-gray-600 mb-4 leading-relaxed">{milestone.description}</p>
+                          
+                          {/* Progress Bar */}
+                          <div className="mb-4">
+                            <div className="flex justify-between text-xs text-gray-500 mb-2">
+                              <span>Progress</span>
+                              <span>{progressPercentage}%</span>
+                            </div>
+                            <div className="progress-bar h-3">
+                              <div 
+                                className="progress-fill" 
+                                style={{ width: `${progressPercentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                            <div className="glass-morphism p-3 rounded-xl">
+                              <p className="text-gray-500 text-xs mb-1">Target</p>
+                              <p className="font-bold text-slate">{milestone.targetValue}</p>
+                            </div>
+                            <div className="glass-morphism p-3 rounded-xl">
+                              <p className="text-gray-500 text-xs mb-1">Current</p>
+                              <p className="font-bold text-slate">{milestone.currentValue}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-xl border border-green-200">
+                              <p className="text-xs text-green-600 mb-1 font-medium">🎁 Bonus Reward</p>
+                              <p className="font-bold text-lg text-green-700">NPR {parseFloat(milestone.bonusAmount || "0").toLocaleString()}</p>
+                            </div>
+                            {milestone.status !== "completed" && (
+                              <Button
+                                onClick={() => updateMilestoneMutation.mutate({ id: milestone.id, status: "completed" })}
+                                disabled={updateMilestoneMutation.isPending}
+                                className="btn-modern relative overflow-hidden"
+                              >
+                                <Trophy className="w-4 h-4 mr-2" />
+                                Complete
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {milestone.responsible && (
+                            <div className="mt-4 text-xs bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-3 rounded-xl">
+                              <span className="font-semibold text-amber-700">👤 Responsible:</span> 
+                              <span className="text-amber-600 ml-1">{milestone.responsible}</span>
+                            </div>
+                          )}
+                          
+                          {milestone.targetDate && (
+                            <div className="mt-2 flex items-center text-xs text-gray-500">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              <span>Due: {new Date(milestone.targetDate).toLocaleDateString()}</span>
+                            </div>
                           )}
                         </div>
-                        
-                        {milestone.responsible && (
-                          <div className="mt-3 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                            <span className="font-medium">Responsible:</span> {milestone.responsible}
-                          </div>
-                        )}
                       </div>
+                      
+                      {/* Background decoration */}
+                      <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full opacity-20"></div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </TabsContent>
