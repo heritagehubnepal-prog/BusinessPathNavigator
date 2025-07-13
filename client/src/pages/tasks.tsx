@@ -145,140 +145,142 @@ export default function Tasks() {
   const completedTasks = tasks.filter(t => t.status === "completed");
 
   return (
-    <div>
+    <div className="min-h-screen">
       <Header 
-        title="Tasks & Milestones" 
-        subtitle="Manage daily tasks and track milestone achievements."
-        actionLabel="Add Task"
+        title="🎯 Tasks & Milestones" 
+        subtitle="Track progress, complete objectives, and earn milestone bonuses."
+        actionLabel="+ Add Task"
         onAction={() => setShowTaskForm(true)}
       />
       
-      <main className="p-6">
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <Trophy className="w-5 h-5 text-accent" />
-                <span className="text-sm font-medium text-accent">Completed Milestones</span>
+      <main className="p-6 space-y-8">
+        {/* Summary Stats with Modern Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="glass-card p-6">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-orange-400 rounded-xl flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-white" />
               </div>
-              <div className="text-2xl font-bold text-slate">{completedMilestones.length}</div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-sm font-medium text-amber-700">Completed Milestones</p>
+                <p className="text-2xl font-bold text-slate">{completedMilestones.length}</p>
+              </div>
+            </div>
+          </div>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <Trophy className="w-5 h-5 text-accent" />
-                <span className="text-sm font-medium text-accent">Total Bonus Earned</span>
+          <div className="glass-card p-6">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-400 rounded-xl flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-white" />
               </div>
-              <div className="text-2xl font-bold text-slate">NPR {totalBonusEarned.toLocaleString()}</div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-sm font-medium text-green-700">Bonus Earned</p>
+                <p className="text-2xl font-bold text-slate">NPR {totalBonusEarned.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <Clock className="w-5 h-5 text-primary" />
-                <span className="text-sm font-medium text-primary">Active Tasks</span>
+          <div className="glass-card p-6">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl flex items-center justify-center">
+                <Clock className="w-5 h-5 text-white" />
               </div>
-              <div className="text-2xl font-bold text-slate">{pendingTasks.length + inProgressTasks.length}</div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-sm font-medium text-blue-700">Active Tasks</p>
+                <p className="text-2xl font-bold text-slate">{pendingTasks.length + inProgressTasks.length}</p>
+              </div>
+            </div>
+          </div>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <Check className="w-5 h-5 text-success" />
-                <span className="text-sm font-medium text-success">Completed Tasks</span>
+          <div className="glass-card p-6">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-xl flex items-center justify-center">
+                <Check className="w-5 h-5 text-white" />
               </div>
-              <div className="text-2xl font-bold text-slate">{completedTasks.length}</div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-sm font-medium text-emerald-700">Completed</p>
+                <p className="text-2xl font-bold text-slate">{completedTasks.length}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="milestones" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="milestones">Milestones</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          <TabsList className="glass-card p-1">
+            <TabsTrigger value="milestones" className="data-[state=active]:bg-green-500 data-[state=active]:text-white">🏆 Milestones</TabsTrigger>
+            <TabsTrigger value="tasks" className="data-[state=active]:bg-green-500 data-[state=active]:text-white">📋 Tasks</TabsTrigger>
           </TabsList>
 
           {/* Milestones Tab */}
           <TabsContent value="milestones" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-slate">Milestone Tracker</h3>
-              <Button onClick={() => setShowMilestoneForm(true)}>
-                Add Milestone
+              <h3 className="text-lg font-semibold text-slate">🏆 Milestone Progress Tracker</h3>
+              <Button onClick={() => setShowMilestoneForm(true)} className="btn-modern">
+                + Add Milestone
               </Button>
             </div>
 
             {/* Milestone Progress Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {milestonesLoading ? (
-                <Card className="col-span-2">
-                  <CardContent className="p-6">
-                    <p className="text-gray-500">Loading milestones...</p>
-                  </CardContent>
-                </Card>
+                <div className="glass-card p-6 col-span-2">
+                  <p className="text-gray-500">Loading milestones...</p>
+                </div>
               ) : milestones.length === 0 ? (
-                <Card className="col-span-2">
-                  <CardContent className="p-6">
-                    <p className="text-gray-500">No milestones found</p>
-                  </CardContent>
-                </Card>
+                <div className="glass-card p-6 col-span-2">
+                  <p className="text-gray-500">No milestones found</p>
+                </div>
               ) : (
                 milestones.map((milestone) => (
-                  <Card key={milestone.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start space-x-4">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getMilestoneIconBg(milestone.status)}`}>
-                          {getMilestoneIcon(milestone.status)}
+                  <div key={milestone.id} className="glass-card p-6 hover:shadow-2xl transition-all duration-300">
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${getMilestoneIconBg(milestone.status)}`}>
+                        {getMilestoneIcon(milestone.status)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-slate">{milestone.name}</h4>
+                          <span className={`${milestone.status === 'completed' ? 'status-badge-completed' : milestone.status === 'in_progress' ? 'status-badge-progress' : 'status-badge-pending'}`}>
+                            {milestone.status.replace("_", " ").charAt(0).toUpperCase() + milestone.status.replace("_", " ").slice(1)}
+                          </span>
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-slate">{milestone.name}</h4>
-                            <Badge className={getMilestoneStatusColor(milestone.status)}>
-                              {milestone.status.replace("_", " ").charAt(0).toUpperCase() + milestone.status.replace("_", " ").slice(1)}
-                            </Badge>
+                        <p className="text-sm text-gray-600 mb-4">{milestone.description}</p>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <p className="text-gray-500 text-xs mb-1">Target</p>
+                            <p className="font-medium">{milestone.targetValue}</p>
                           </div>
-                          <p className="text-sm text-gray-600 mb-3">{milestone.description}</p>
-                          
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-gray-500">Target</p>
-                              <p className="font-medium">{milestone.targetValue}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500">Current</p>
-                              <p className="font-medium">{milestone.currentValue}</p>
-                            </div>
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <p className="text-gray-500 text-xs mb-1">Current</p>
+                            <p className="font-medium">{milestone.currentValue}</p>
                           </div>
-                          
-                          <div className="mt-4 flex items-center justify-between">
-                            <div>
-                              <p className="text-sm text-gray-500">Bonus Amount</p>
-                              <p className="font-medium text-accent">NPR {parseFloat(milestone.bonusAmount || "0").toLocaleString()}</p>
-                            </div>
-                            {milestone.status !== "completed" && (
-                              <Button
-                                size="sm"
-                                onClick={() => updateMilestoneMutation.mutate({ id: milestone.id, status: "completed" })}
-                                disabled={updateMilestoneMutation.isPending}
-                              >
-                                Mark Complete
-                              </Button>
-                            )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg">
+                            <p className="text-xs text-green-600 mb-1">Bonus Amount</p>
+                            <p className="font-bold text-green-700">NPR {parseFloat(milestone.bonusAmount || "0").toLocaleString()}</p>
                           </div>
-                          
-                          {milestone.responsible && (
-                            <div className="mt-2">
-                              <p className="text-xs text-gray-500">Responsible: {milestone.responsible}</p>
-                            </div>
+                          {milestone.status !== "completed" && (
+                            <Button
+                              onClick={() => updateMilestoneMutation.mutate({ id: milestone.id, status: "completed" })}
+                              disabled={updateMilestoneMutation.isPending}
+                              className="btn-secondary-modern"
+                            >
+                              ✓ Complete
+                            </Button>
                           )}
                         </div>
+                        
+                        {milestone.responsible && (
+                          <div className="mt-3 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
+                            <span className="font-medium">Responsible:</span> {milestone.responsible}
+                          </div>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))
               )}
             </div>
@@ -286,11 +288,11 @@ export default function Tasks() {
 
           {/* Tasks Tab */}
           <TabsContent value="tasks" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Tasks</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="table-modern">
+              <div className="table-header p-4">
+                <h3 className="text-lg font-semibold text-slate">📋 All Tasks</h3>
+              </div>
+              <div className="p-4">
                 {tasksLoading ? (
                   <p className="text-gray-500">Loading tasks...</p>
                 ) : tasks.length === 0 ? (
@@ -298,53 +300,52 @@ export default function Tasks() {
                 ) : (
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Task</TableHead>
-                        <TableHead>Priority</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Assigned To</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Actions</TableHead>
+                      <TableRow className="table-header">
+                        <TableHead className="font-semibold">Task</TableHead>
+                        <TableHead className="font-semibold">Priority</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Assigned To</TableHead>
+                        <TableHead className="font-semibold">Due Date</TableHead>
+                        <TableHead className="font-semibold">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {tasks.map((task) => (
-                        <TableRow key={task.id}>
+                        <TableRow key={task.id} className="table-row">
                           <TableCell>
                             <div>
-                              <p className="font-medium">{task.title}</p>
+                              <p className="font-medium text-slate">{task.title}</p>
                               {task.description && (
                                 <p className="text-sm text-gray-600">{task.description}</p>
                               )}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge className={getPriorityColor(task.priority)}>
+                            <span className={`${task.priority === 'high' ? 'status-badge-pending' : task.priority === 'medium' ? 'status-badge-progress' : 'status-badge-completed'}`}>
                               {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                            </Badge>
+                            </span>
                           </TableCell>
                           <TableCell>
-                            <Badge className={getTaskStatusColor(task.status)}>
+                            <span className={`${task.status === 'completed' ? 'status-badge-completed' : task.status === 'in_progress' ? 'status-badge-progress' : 'status-badge-pending'}`}>
                               {task.status.replace("_", " ").charAt(0).toUpperCase() + task.status.replace("_", " ").slice(1)}
-                            </Badge>
+                            </span>
                           </TableCell>
-                          <TableCell>{task.assignedTo || "-"}</TableCell>
-                          <TableCell>
+                          <TableCell className="text-gray-600">{task.assignedTo || "-"}</TableCell>
+                          <TableCell className="text-gray-600">
                             {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "-"}
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
                               {task.status !== "completed" && (
                                 <Button
-                                  size="sm"
-                                  variant="outline"
                                   onClick={() => updateTaskMutation.mutate({ 
                                     id: task.id, 
                                     status: task.status === "pending" ? "in_progress" : "completed" 
                                   })}
                                   disabled={updateTaskMutation.isPending}
+                                  className="btn-secondary-modern text-xs py-1 px-3"
                                 >
-                                  {task.status === "pending" ? "Start" : "Complete"}
+                                  {task.status === "pending" ? "▶ Start" : "✓ Complete"}
                                 </Button>
                               )}
                             </div>
@@ -354,8 +355,8 @@ export default function Tasks() {
                     </TableBody>
                   </Table>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </main>

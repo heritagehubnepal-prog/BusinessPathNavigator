@@ -30,28 +30,45 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen">
       <Header 
-        title="Dashboard" 
-        subtitle="Welcome back! Here's what's happening with your mushroom farm."
-        actionLabel="Add Production Batch"
+        title="🍄 Mushroom Farm Dashboard" 
+        subtitle="Welcome back! Monitor your mycelium empire and track growth progress."
+        actionLabel="+ Add Production Batch"
         onAction={() => {/* Handle in QuickActions */}}
       />
       
-      <main className="p-6">
-        {analytics && <KPICards analytics={analytics} />}
+      <main className="p-6 space-y-8">
+        {/* Hero Stats Section */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-100/50 to-amber-100/50 rounded-3xl -z-10"></div>
+          {analytics && <KPICards analytics={analytics} />}
+        </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <ProductionChart />
-          <RecentActivities />
+        {/* Main Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ProductionChart />
+          </div>
+          <div className="glass-card p-6">
+            <RecentActivities />
+          </div>
         </div>
 
+        {/* Secondary Widgets */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ActiveBatches />
-          <MilestoneTracker />
+          <div className="glass-card p-6">
+            <ActiveBatches />
+          </div>
+          <div className="glass-card p-6">
+            <MilestoneTracker />
+          </div>
         </div>
 
-        <QuickActions />
+        {/* Quick Actions */}
+        <div className="glass-card p-6">
+          <QuickActions />
+        </div>
       </main>
     </div>
   );

@@ -27,17 +27,17 @@ export default function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <div className="w-64 bg-slate text-slate-foreground shadow-xl">
-      <div className="p-6 border-b border-gray-600 mycelium-network">
+    <div className="w-64 sidebar-modern shadow-2xl">
+      <div className="p-6 border-b border-slate-700/50 mycelium-network">
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <Sprout className="text-primary text-2xl" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-spore-gold rounded-full animate-pulse"></div>
+            <Sprout className="text-green-400 text-2xl float-animation" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full pulse-green"></div>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-forest-green">Mycopath</h1>
-            <p className="text-xs text-gray-300">🍄 Mushroom Innovation Lab</p>
-            <p className="text-xs text-spore-gold">🇳🇵 From Nepal's Mountains</p>
+            <h1 className="text-xl font-bold text-white">Mycopath</h1>
+            <p className="text-xs text-green-300">🍄 Mushroom Innovation Lab</p>
+            <p className="text-xs text-amber-300 bounce-subtle">🇳🇵 From Nepal's Mountains</p>
           </div>
         </div>
       </div>
@@ -52,13 +52,16 @@ export default function Sidebar() {
               return (
                 <Link key={item.name} href={item.href}>
                   <a className={cn(
-                    "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors",
+                    "nav-item",
                     isActive 
-                      ? "bg-primary text-white" 
-                      : "text-gray-300 hover:bg-gray-600 hover:text-white"
+                      ? "active" 
+                      : "text-gray-300 hover:text-white"
                   )}>
                     <Icon className="w-5 h-5" />
                     <span>{item.name}</span>
+                    {isActive && (
+                      <div className="ml-auto w-2 h-2 bg-green-400 rounded-full pulse-green"></div>
+                    )}
                   </a>
                 </Link>
               );

@@ -119,6 +119,10 @@ export class MemStorage implements IStorage {
   private milestones: Map<number, Milestone>;
   private tasks: Map<number, Task>;
   private activities: Map<number, Activity>;
+  private customers: Map<number, Customer>;
+  private products: Map<number, Product>;
+  private orders: Map<number, Order>;
+  private orderItems: Map<number, OrderItem>;
   private currentId: number;
 
   constructor() {
@@ -129,6 +133,10 @@ export class MemStorage implements IStorage {
     this.milestones = new Map();
     this.tasks = new Map();
     this.activities = new Map();
+    this.customers = new Map();
+    this.products = new Map();
+    this.orders = new Map();
+    this.orderItems = new Map();
     this.currentId = 1;
     
     // Initialize with some default data
@@ -217,6 +225,15 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: number, updateUser: Partial<InsertUser>): Promise<User | undefined> {
+    const existing = this.users.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updateUser };
+    this.users.set(id, updated);
+    return updated;
   }
 
   // Production Batches
@@ -477,6 +494,170 @@ export class MemStorage implements IStorage {
     };
     this.activities.set(id, activity);
     return activity;
+  }
+
+  // Sales Management - Customers
+  async getCustomers(): Promise<Customer[]> {
+    return Array.from(this.customers.values()).sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }
+
+  async getCustomer(id: number): Promise<Customer | undefined> {
+    return this.customers.get(id);
+  }
+
+  async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
+    const id = this.currentId++;
+    const customer: Customer = { 
+      ...insertCustomer, 
+      id, 
+      createdAt: new Date(),
+      email: insertCustomer.email || null,
+      phone: insertCustomer.phone || null,
+      address: insertCustomer.address || null,
+      isActive: insertCustomer.isActive ?? true,
+      notes: insertCustomer.notes || null,
+      preferredPayment: insertCustomer.preferredPayment || null,
+    };
+    this.customers.set(id, customer);
+    return customer;
+  }
+
+  async updateCustomer(id: number, updateCustomer: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const existing = this.customers.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updateCustomer };
+    this.customers.set(id, updated);
+    return updated;
+  }
+
+  async deleteCustomer(id: number): Promise<boolean> {
+    return this.customers.delete(id);
+  }
+
+  // Sales Management - Products
+  async getProducts(): Promise<Product[]> {
+    return Array.from(this.products.values()).sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    return this.products.get(id);
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const id = this.currentId++;
+    const product: Product = { 
+      ...insertProduct, 
+      id, 
+      createdAt: new Date(),
+      description: insertProduct.description || null,
+      unit: insertProduct.unit || "kg",
+      isActive: insertProduct.isActive ?? true,
+      currentStock: insertProduct.currentStock || null,
+      minimumStock: insertProduct.minimumStock || null,
+      costPrice: insertProduct.costPrice || null,
+    };
+    this.products.set(id, product);
+    return product;
+  }
+
+  async updateProduct(id: number, updateProduct: Partial<InsertProduct>): Promise<Product | undefined> {
+    const existing = this.products.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updateProduct };
+    this.products.set(id, updated);
+    return updated;
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    return this.products.delete(id);
+  }
+
+  // Sales Management - Orders
+  async getOrders(): Promise<Order[]> {
+    return Array.from(this.orders.values()).sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    return this.orders.get(id);
+  }
+
+  async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+    const id = this.currentId++;
+    const order: Order = { 
+      ...insertOrder, 
+      id, 
+      createdAt: new Date(),
+      notes: insertOrder.notes || null,
+      customerId: insertOrder.customerId || null,
+      paidAmount: insertOrder.paidAmount || null,
+      paymentMethod: insertOrder.paymentMethod || null,
+      shippingAddress: insertOrder.shippingAddress || null,
+      createdBy: insertOrder.createdBy || null,
+    };
+    this.orders.set(id, order);
+
+    // Add order items
+    for (const item of items) {
+      await this.addOrderItem({ ...item, orderId: id });
+    }
+    
+    return order;
+  }
+
+  async updateOrder(id: number, updateOrder: Partial<InsertOrder>): Promise<Order | undefined> {
+    const existing = this.orders.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updateOrder };
+    this.orders.set(id, updated);
+    return updated;
+  }
+
+  async deleteOrder(id: number): Promise<boolean> {
+    // Delete associated order items first
+    const orderItems = Array.from(this.orderItems.values()).filter(item => item.orderId === id);
+    orderItems.forEach(item => this.orderItems.delete(item.id));
+    
+    return this.orders.delete(id);
+  }
+
+  // Sales Management - Order Items
+  async getOrderItems(orderId: number): Promise<OrderItem[]> {
+    return Array.from(this.orderItems.values()).filter(item => item.orderId === orderId);
+  }
+
+  async addOrderItem(insertItem: InsertOrderItem): Promise<OrderItem> {
+    const id = this.currentId++;
+    const item: OrderItem = { 
+      ...insertItem, 
+      id,
+      batchId: insertItem.batchId || null,
+      orderId: insertItem.orderId || null,
+      productId: insertItem.productId || null,
+    };
+    this.orderItems.set(id, item);
+    return item;
+  }
+
+  async updateOrderItem(id: number, updateItem: Partial<InsertOrderItem>): Promise<OrderItem | undefined> {
+    const existing = this.orderItems.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updateItem };
+    this.orderItems.set(id, updated);
+    return updated;
+  }
+
+  async deleteOrderItem(id: number): Promise<boolean> {
+    return this.orderItems.delete(id);
   }
 }
 
