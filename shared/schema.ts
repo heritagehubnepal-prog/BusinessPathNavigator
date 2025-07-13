@@ -6,6 +6,12 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  role: varchar("role", { length: 20 }).notNull().default("worker"), // admin, manager, production, finance, sales, worker
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const productionBatches = pgTable("production_batches", {
@@ -83,10 +89,87 @@ export const activities = pgTable("activities", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Sales Management Tables
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 100 }),
+  phone: varchar("phone", { length: 20 }),
+  address: text("address"),
+  customerType: varchar("customer_type", { length: 20 }).notNull(), // individual, restaurant, retailer, distributor
+  preferredPayment: varchar("preferred_payment", { length: 50 }),
+  notes: text("notes"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(), // fresh_mushrooms, powder, packaging_kit
+  description: text("description"),
+  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
+  unit: varchar("unit", { length: 20 }).notNull(), // kg, grams, pieces
+  currentStock: decimal("current_stock", { precision: 10, scale: 2 }).default("0"),
+  minimumStock: decimal("minimum_stock", { precision: 10, scale: 2 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  orderNumber: varchar("order_number", { length: 50 }).notNull().unique(),
+  customerId: integer("customer_id").references(() => customers.id),
+  orderType: varchar("order_type", { length: 20 }).notNull(), // online, inhouse, wholesale
+  status: varchar("status", { length: 20 }).notNull(), // pending, confirmed, processing, shipped, delivered, cancelled
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  paidAmount: decimal("paid_amount", { precision: 12, scale: 2 }).default("0"),
+  paymentStatus: varchar("payment_status", { length: 20 }).notNull(), // pending, partial, paid, refunded
+  paymentMethod: varchar("payment_method", { length: 50 }),
+  shippingAddress: text("shipping_address"),
+  orderDate: timestamp("order_date").notNull(),
+  expectedDelivery: timestamp("expected_delivery"),
+  actualDelivery: timestamp("actual_delivery"),
+  notes: text("notes"),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id),
+  productId: integer("product_id").references(() => products.id),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  batchId: integer("batch_id").references(() => productionBatches.id), // Track which batch the product came from
+});
+
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCustomerSchema = createInsertSchema(customers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  orderNumber: true, // Auto-generated
+});
+
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
+  id: true,
 });
 
 export const insertProductionBatchSchema = createInsertSchema(productionBatches).omit({
@@ -134,3 +217,13 @@ export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
+
+// Sales Management Types
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;

@@ -6,6 +6,10 @@ import {
   milestones,
   tasks,
   activities,
+  customers,
+  products,
+  orders,
+  orderItems,
   type User,
   type InsertUser,
   type ProductionBatch,
@@ -20,13 +24,24 @@ import {
   type InsertTask,
   type Activity,
   type InsertActivity,
+  type Customer,
+  type InsertCustomer,
+  type Product,
+  type InsertProduct,
+  type Order,
+  type InsertOrder,
+  type OrderItem,
+  type InsertOrderItem,
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   
   // Production Batches
   getProductionBatches(): Promise<ProductionBatch[]>;
@@ -66,6 +81,34 @@ export interface IStorage {
   // Activities
   getActivities(limit?: number): Promise<Activity[]>;
   createActivity(activity: InsertActivity): Promise<Activity>;
+
+  // Sales Management
+  // Customers
+  getCustomers(): Promise<Customer[]>;
+  getCustomer(id: number): Promise<Customer | undefined>;
+  createCustomer(customer: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  deleteCustomer(id: number): Promise<boolean>;
+  
+  // Products
+  getProducts(): Promise<Product[]>;
+  getProduct(id: number): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
+  deleteProduct(id: number): Promise<boolean>;
+  
+  // Orders
+  getOrders(): Promise<Order[]>;
+  getOrder(id: number): Promise<Order | undefined>;
+  createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
+  updateOrder(id: number, order: Partial<InsertOrder>): Promise<Order | undefined>;
+  deleteOrder(id: number): Promise<boolean>;
+  
+  // Order Items
+  getOrderItems(orderId: number): Promise<OrderItem[]>;
+  addOrderItem(item: InsertOrderItem): Promise<OrderItem>;
+  updateOrderItem(id: number, item: Partial<InsertOrderItem>): Promise<OrderItem | undefined>;
+  deleteOrderItem(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -162,7 +205,16 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id,
+      email: insertUser.email || null,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
+      role: insertUser.role || "worker",
+      isActive: insertUser.isActive ?? true,
+      createdAt: new Date(),
+    };
     this.users.set(id, user);
     return user;
   }
@@ -428,4 +480,329 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUser(id: number, updateUser: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db.update(users).set(updateUser).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  // Production Batches
+  async getProductionBatches(): Promise<ProductionBatch[]> {
+    return await db.select().from(productionBatches).orderBy(desc(productionBatches.createdAt));
+  }
+
+  async getProductionBatch(id: number): Promise<ProductionBatch | undefined> {
+    const [batch] = await db.select().from(productionBatches).where(eq(productionBatches.id, id));
+    return batch;
+  }
+
+  async createProductionBatch(insertBatch: InsertProductionBatch): Promise<ProductionBatch> {
+    const [batch] = await db.insert(productionBatches).values(insertBatch).returning();
+    
+    await this.createActivity({
+      type: "batch_created",
+      description: `Production batch ${batch.batchNumber} created`,
+      entityId: batch.id,
+      entityType: "production_batch",
+    });
+    
+    return batch;
+  }
+
+  async updateProductionBatch(id: number, updateBatch: Partial<InsertProductionBatch>): Promise<ProductionBatch | undefined> {
+    const [batch] = await db.update(productionBatches).set(updateBatch).where(eq(productionBatches.id, id)).returning();
+    
+    if (batch && updateBatch.status) {
+      await this.createActivity({
+        type: "batch_updated",
+        description: `Batch ${batch.batchNumber} status changed to ${updateBatch.status}`,
+        entityId: id,
+        entityType: "production_batch",
+      });
+    }
+    
+    return batch;
+  }
+
+  async deleteProductionBatch(id: number): Promise<boolean> {
+    const result = await db.delete(productionBatches).where(eq(productionBatches.id, id));
+    return true;
+  }
+
+  // Inventory  
+  async getInventoryItems(): Promise<Inventory[]> {
+    return await db.select().from(inventory).orderBy(inventory.itemName);
+  }
+
+  async getInventoryItem(id: number): Promise<Inventory | undefined> {
+    const [item] = await db.select().from(inventory).where(eq(inventory.id, id));
+    return item;
+  }
+
+  async createInventoryItem(insertItem: InsertInventory): Promise<Inventory> {
+    const [item] = await db.insert(inventory).values(insertItem).returning();
+    return item;
+  }
+
+  async updateInventoryItem(id: number, updateItem: Partial<InsertInventory>): Promise<Inventory | undefined> {
+    const [item] = await db.update(inventory).set({...updateItem, lastUpdated: new Date()}).where(eq(inventory.id, id)).returning();
+    return item;
+  }
+
+  async deleteInventoryItem(id: number): Promise<boolean> {
+    await db.delete(inventory).where(eq(inventory.id, id));
+    return true;
+  }
+
+  // Financial Transactions
+  async getFinancialTransactions(): Promise<FinancialTransaction[]> {
+    return await db.select().from(financialTransactions).orderBy(desc(financialTransactions.date));
+  }
+
+  async getFinancialTransaction(id: number): Promise<FinancialTransaction | undefined> {
+    const [transaction] = await db.select().from(financialTransactions).where(eq(financialTransactions.id, id));
+    return transaction;
+  }
+
+  async createFinancialTransaction(insertTransaction: InsertFinancialTransaction): Promise<FinancialTransaction> {
+    const [transaction] = await db.insert(financialTransactions).values(insertTransaction).returning();
+    
+    await this.createActivity({
+      type: transaction.type === "income" ? "income_added" : "expense_added",
+      description: `${transaction.type === "income" ? "Income" : "Expense"}: ${transaction.description} - NPR ${transaction.amount}`,
+      entityId: transaction.id,
+      entityType: "financial_transaction",
+    });
+    
+    return transaction;
+  }
+
+  async updateFinancialTransaction(id: number, updateTransaction: Partial<InsertFinancialTransaction>): Promise<FinancialTransaction | undefined> {
+    const [transaction] = await db.update(financialTransactions).set(updateTransaction).where(eq(financialTransactions.id, id)).returning();
+    return transaction;
+  }
+
+  async deleteFinancialTransaction(id: number): Promise<boolean> {
+    await db.delete(financialTransactions).where(eq(financialTransactions.id, id));
+    return true;
+  }
+
+  // Milestones
+  async getMilestones(): Promise<Milestone[]> {
+    return await db.select().from(milestones).orderBy(desc(milestones.createdAt));
+  }
+
+  async getMilestone(id: number): Promise<Milestone | undefined> {
+    const [milestone] = await db.select().from(milestones).where(eq(milestones.id, id));
+    return milestone;
+  }
+
+  async createMilestone(insertMilestone: InsertMilestone): Promise<Milestone> {
+    const [milestone] = await db.insert(milestones).values(insertMilestone).returning();
+    return milestone;
+  }
+
+  async updateMilestone(id: number, updateMilestone: Partial<InsertMilestone>): Promise<Milestone | undefined> {
+    const [milestone] = await db.update(milestones).set(updateMilestone).where(eq(milestones.id, id)).returning();
+    
+    if (milestone && updateMilestone.status === "completed") {
+      await this.createActivity({
+        type: "milestone_completed",
+        description: `Milestone completed: ${milestone.name} - Bonus: NPR ${milestone.bonusAmount || 0}`,
+        entityId: milestone.id,
+        entityType: "milestone",
+      });
+    }
+    
+    return milestone;
+  }
+
+  async deleteMilestone(id: number): Promise<boolean> {
+    await db.delete(milestones).where(eq(milestones.id, id));
+    return true;
+  }
+
+  // Tasks
+  async getTasks(): Promise<Task[]> {
+    return await db.select().from(tasks).orderBy(desc(tasks.createdAt));
+  }
+
+  async getTask(id: number): Promise<Task | undefined> {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task;
+  }
+
+  async createTask(insertTask: InsertTask): Promise<Task> {
+    const [task] = await db.insert(tasks).values(insertTask).returning();
+    return task;
+  }
+
+  async updateTask(id: number, updateTask: Partial<InsertTask>): Promise<Task | undefined> {
+    const updateData = {...updateTask};
+    if (updateTask.status === "completed") {
+      updateData.completedDate = new Date();
+    }
+    
+    const [task] = await db.update(tasks).set(updateData).where(eq(tasks.id, id)).returning();
+    return task;
+  }
+
+  async deleteTask(id: number): Promise<boolean> {
+    await db.delete(tasks).where(eq(tasks.id, id));
+    return true;
+  }
+
+  // Activities
+  async getActivities(limit = 50): Promise<Activity[]> {
+    return await db.select().from(activities).orderBy(desc(activities.createdAt)).limit(limit);
+  }
+
+  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
+    const [activity] = await db.insert(activities).values(insertActivity).returning();
+    return activity;
+  }
+
+  // Sales Management
+  async getCustomers(): Promise<Customer[]> {
+    return await db.select().from(customers).orderBy(customers.name);
+  }
+
+  async getCustomer(id: number): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+    return customer;
+  }
+
+  async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
+    const [customer] = await db.insert(customers).values(insertCustomer).returning();
+    
+    await this.createActivity({
+      type: "customer_added",
+      description: `New customer added: ${customer.name}`,
+      entityId: customer.id,
+      entityType: "customer",
+    });
+    
+    return customer;
+  }
+
+  async updateCustomer(id: number, updateCustomer: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const [customer] = await db.update(customers).set(updateCustomer).where(eq(customers.id, id)).returning();
+    return customer;
+  }
+
+  async deleteCustomer(id: number): Promise<boolean> {
+    await db.delete(customers).where(eq(customers.id, id));
+    return true;
+  }
+
+  // Products
+  async getProducts(): Promise<Product[]> {
+    return await db.select().from(products).orderBy(products.name);
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const [product] = await db.insert(products).values(insertProduct).returning();
+    return product;
+  }
+
+  async updateProduct(id: number, updateProduct: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [product] = await db.update(products).set(updateProduct).where(eq(products.id, id)).returning();
+    return product;
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    await db.delete(products).where(eq(products.id, id));
+    return true;
+  }
+
+  // Orders
+  async getOrders(): Promise<Order[]> {
+    return await db.select().from(orders).orderBy(desc(orders.orderDate));
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
+  }
+
+  async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+    // Generate order number
+    const orderCount = await db.select({ count: sql`count(*)` }).from(orders);
+    const orderNumber = `ORD-${Date.now()}-${orderCount.length + 1}`;
+    
+    const [order] = await db.insert(orders).values({
+      ...insertOrder,
+      orderNumber,
+    }).returning();
+    
+    // Add order items
+    for (const item of items) {
+      await db.insert(orderItems).values({
+        ...item,
+        orderId: order.id,
+      });
+    }
+    
+    await this.createActivity({
+      type: "order_created",
+      description: `New order created: ${orderNumber} - NPR ${order.totalAmount}`,
+      entityId: order.id,
+      entityType: "order",
+    });
+    
+    return order;
+  }
+
+  async updateOrder(id: number, updateOrder: Partial<InsertOrder>): Promise<Order | undefined> {
+    const [order] = await db.update(orders).set(updateOrder).where(eq(orders.id, id)).returning();
+    return order;
+  }
+
+  async deleteOrder(id: number): Promise<boolean> {
+    await db.delete(orderItems).where(eq(orderItems.orderId, id));
+    await db.delete(orders).where(eq(orders.id, id));
+    return true;
+  }
+
+  // Order Items
+  async getOrderItems(orderId: number): Promise<OrderItem[]> {
+    return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  }
+
+  async addOrderItem(insertItem: InsertOrderItem): Promise<OrderItem> {
+    const [item] = await db.insert(orderItems).values(insertItem).returning();
+    return item;
+  }
+
+  async updateOrderItem(id: number, updateItem: Partial<InsertOrderItem>): Promise<OrderItem | undefined> {
+    const [item] = await db.update(orderItems).set(updateItem).where(eq(orderItems.id, id)).returning();
+    return item;
+  }
+
+  async deleteOrderItem(id: number): Promise<boolean> {
+    await db.delete(orderItems).where(eq(orderItems.id, id));
+    return true;
+  }
+}
+
+export const storage = new DatabaseStorage();

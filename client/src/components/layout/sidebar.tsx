@@ -7,7 +7,8 @@ import {
   TrendingUp, 
   CheckSquare, 
   PieChart, 
-  FileText
+  FileText,
+  ShoppingCart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const navigation = [
   { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Financial", href: "/financial", icon: TrendingUp },
   { name: "Tasks & Milestones", href: "/tasks", icon: CheckSquare },
+  { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Analytics", href: "/analytics", icon: PieChart },
   { name: "Reports", href: "/reports", icon: FileText },
 ];
