@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(47, 33%, 97%);
+  --foreground: hsl(47, 20%, 15%);
+  --muted: hsl(47, 15%, 92%);
+  --muted-foreground: hsl(47, 8%, 45%);
+  --popover: hsl(47, 33%, 97%);
+  --popover-foreground: hsl(47, 20%, 15%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(47, 20%, 15%);
+  --border: hsl(47, 12%, 88%);
+  --input: hsl(47, 12%, 88%);
+  --primary: hsl(71, 54%, 35%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(47, 15%, 92%);
+  --secondary-foreground: hsl(47, 20%, 15%);
+  --accent: hsl(43, 74%, 41%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(47, 20%, 15%);
+  --radius: 0.5rem;
+  --success: hsl(120, 61%, 34%);
+  --success-foreground: hsl(0, 0%, 100%);
+  --warning: hsl(38, 100%, 50%);
+  --warning-foreground: hsl(0, 0%, 100%);
+  --slate: hsl(180, 25%, 25%);
+  --slate-foreground: hsl(0, 0%, 100%);
+  --earth: hsl(47, 33%, 97%);
+}
+
+.dark {
+  --background: hsl(47, 15%, 8%);
+  --foreground: hsl(0, 0%, 95%);
+  --muted: hsl(47, 10%, 15%);
+  --muted-foreground: hsl(47, 8%, 65%);
+  --popover: hsl(47, 15%, 8%);
+  --popover-foreground: hsl(0, 0%, 95%);
+  --card: hsl(47, 10%, 12%);
+  --card-foreground: hsl(0, 0%, 95%);
+  --border: hsl(47, 10%, 15%);
+  --input: hsl(47, 10%, 15%);
+  --primary: hsl(71, 54%, 35%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(47, 10%, 15%);
+  --secondary-foreground: hsl(0, 0%, 95%);
+  --accent: hsl(43, 74%, 41%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 62%, 30%);
+  --destructive-foreground: hsl(0, 0%, 95%);
+  --ring: hsl(47, 8%, 75%);
+  --success: hsl(120, 61%, 34%);
+  --success-foreground: hsl(0, 0%, 100%);
+  --warning: hsl(38, 100%, 50%);
+  --warning-foreground: hsl(0, 0%, 100%);
+  --slate: hsl(180, 25%, 15%);
+  --slate-foreground: hsl(0, 0%, 100%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .bg-success {
+    background-color: var(--success);
+  }
+  
+  .text-success {
+    color: var(--success);
+  }
+  
+  .bg-warning {
+    background-color: var(--warning);
+  }
+  
+  .text-warning {
+    color: var(--warning);
+  }
+  
+  .bg-slate {
+    background-color: var(--slate);
+  }
+  
+  .text-slate {
+    color: var(--slate);
+  }
+  
+  .text-slate-foreground {
+    color: var(--slate-foreground);
+  }
+  
+  .bg-earth {
+    background-color: var(--earth);
+  }
+}

@@ -1,0 +1,295 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import {
+  insertProductionBatchSchema,
+  insertInventorySchema,
+  insertFinancialTransactionSchema,
+  insertMilestoneSchema,
+  insertTaskSchema,
+} from "@shared/schema";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Production Batches
+  app.get("/api/production-batches", async (req, res) => {
+    try {
+      const batches = await storage.getProductionBatches();
+      res.json(batches);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch production batches" });
+    }
+  });
+
+  app.get("/api/production-batches/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const batch = await storage.getProductionBatch(id);
+      if (!batch) {
+        return res.status(404).json({ message: "Production batch not found" });
+      }
+      res.json(batch);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch production batch" });
+    }
+  });
+
+  app.post("/api/production-batches", async (req, res) => {
+    try {
+      const validatedData = insertProductionBatchSchema.parse(req.body);
+      const batch = await storage.createProductionBatch(validatedData);
+      res.status(201).json(batch);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid batch data", error });
+    }
+  });
+
+  app.patch("/api/production-batches/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertProductionBatchSchema.partial().parse(req.body);
+      const batch = await storage.updateProductionBatch(id, validatedData);
+      if (!batch) {
+        return res.status(404).json({ message: "Production batch not found" });
+      }
+      res.json(batch);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid batch data", error });
+    }
+  });
+
+  app.delete("/api/production-batches/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteProductionBatch(id);
+      if (!success) {
+        return res.status(404).json({ message: "Production batch not found" });
+      }
+      res.json({ message: "Production batch deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete production batch" });
+    }
+  });
+
+  // Inventory
+  app.get("/api/inventory", async (req, res) => {
+    try {
+      const items = await storage.getInventoryItems();
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch inventory items" });
+    }
+  });
+
+  app.post("/api/inventory", async (req, res) => {
+    try {
+      const validatedData = insertInventorySchema.parse(req.body);
+      const item = await storage.createInventoryItem(validatedData);
+      res.status(201).json(item);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid inventory data", error });
+    }
+  });
+
+  app.patch("/api/inventory/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertInventorySchema.partial().parse(req.body);
+      const item = await storage.updateInventoryItem(id, validatedData);
+      if (!item) {
+        return res.status(404).json({ message: "Inventory item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid inventory data", error });
+    }
+  });
+
+  // Financial Transactions
+  app.get("/api/financial-transactions", async (req, res) => {
+    try {
+      const transactions = await storage.getFinancialTransactions();
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch financial transactions" });
+    }
+  });
+
+  app.post("/api/financial-transactions", async (req, res) => {
+    try {
+      const validatedData = insertFinancialTransactionSchema.parse(req.body);
+      const transaction = await storage.createFinancialTransaction(validatedData);
+      res.status(201).json(transaction);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid transaction data", error });
+    }
+  });
+
+  // Milestones
+  app.get("/api/milestones", async (req, res) => {
+    try {
+      const milestones = await storage.getMilestones();
+      res.json(milestones);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch milestones" });
+    }
+  });
+
+  app.post("/api/milestones", async (req, res) => {
+    try {
+      const validatedData = insertMilestoneSchema.parse(req.body);
+      const milestone = await storage.createMilestone(validatedData);
+      res.status(201).json(milestone);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid milestone data", error });
+    }
+  });
+
+  app.patch("/api/milestones/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertMilestoneSchema.partial().parse(req.body);
+      const milestone = await storage.updateMilestone(id, validatedData);
+      if (!milestone) {
+        return res.status(404).json({ message: "Milestone not found" });
+      }
+      res.json(milestone);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid milestone data", error });
+    }
+  });
+
+  // Tasks
+  app.get("/api/tasks", async (req, res) => {
+    try {
+      const tasks = await storage.getTasks();
+      res.json(tasks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  app.post("/api/tasks", async (req, res) => {
+    try {
+      const validatedData = insertTaskSchema.parse(req.body);
+      const task = await storage.createTask(validatedData);
+      res.status(201).json(task);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid task data", error });
+    }
+  });
+
+  app.patch("/api/tasks/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertTaskSchema.partial().parse(req.body);
+      const task = await storage.updateTask(id, validatedData);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      res.json(task);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid task data", error });
+    }
+  });
+
+  // Activities
+  app.get("/api/activities", async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const activities = await storage.getActivities(limit);
+      res.json(activities);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch activities" });
+    }
+  });
+
+  // Analytics endpoints
+  app.get("/api/analytics/dashboard", async (req, res) => {
+    try {
+      const batches = await storage.getProductionBatches();
+      const transactions = await storage.getFinancialTransactions();
+      const milestones = await storage.getMilestones();
+
+      // Calculate KPIs
+      const activeBatches = batches.filter(b => b.status === "growing" || b.status === "inoculation");
+      const totalYieldThisMonth = batches
+        .filter(b => b.harvestedWeight && new Date(b.actualHarvestDate || 0).getMonth() === new Date().getMonth())
+        .reduce((sum, b) => sum + parseFloat(b.harvestedWeight || "0"), 0);
+
+      const completedMilestones = milestones.filter(m => m.status === "completed");
+      const totalBonusEarned = completedMilestones.reduce((sum, m) => sum + parseFloat(m.bonusAmount || "0"), 0);
+
+      const revenueThisMonth = transactions
+        .filter(t => t.type === "income" && new Date(t.date).getMonth() === new Date().getMonth())
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+      const expensesThisMonth = transactions
+        .filter(t => t.type === "expense" && new Date(t.date).getMonth() === new Date().getMonth())
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+      // Break-even calculation (simplified)
+      const totalRevenue = transactions
+        .filter(t => t.type === "income")
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      const totalExpenses = transactions
+        .filter(t => t.type === "expense")
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+      const breakEvenProgress = totalRevenue > 0 ? Math.min((totalRevenue / (totalRevenue + Math.abs(totalRevenue - totalExpenses))) * 100, 100) : 0;
+
+      // Contamination rate calculation
+      const batchesWithContamination = batches.filter(b => b.contaminationRate);
+      const avgContaminationRate = batchesWithContamination.length > 0 
+        ? batchesWithContamination.reduce((sum, b) => sum + parseFloat(b.contaminationRate || "0"), 0) / batchesWithContamination.length 
+        : 0;
+
+      const analytics = {
+        breakEvenProgress: Math.round(breakEvenProgress),
+        totalYieldThisMonth,
+        contaminationRate: Math.round(avgContaminationRate * 100) / 100,
+        revenueThisMonth,
+        expensesThisMonth,
+        profitThisMonth: revenueThisMonth - expensesThisMonth,
+        activeBatchesCount: activeBatches.length,
+        completedMilestonesCount: completedMilestones.length,
+        totalBonusEarned,
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
+
+  app.get("/api/analytics/production", async (req, res) => {
+    try {
+      const batches = await storage.getProductionBatches();
+      
+      // Group batches by month for production chart
+      const monthlyData = batches
+        .filter(b => b.harvestedWeight && b.actualHarvestDate)
+        .reduce((acc, batch) => {
+          const month = new Date(batch.actualHarvestDate!).toLocaleDateString('en-US', { month: 'short' });
+          if (!acc[month]) {
+            acc[month] = { mushrooms: 0, mycelium: 0 };
+          }
+          
+          if (batch.productType.toLowerCase().includes('mushroom')) {
+            acc[month].mushrooms += parseFloat(batch.harvestedWeight || "0");
+          } else {
+            acc[month].mycelium += 1; // Count units for mycelium products
+          }
+          
+          return acc;
+        }, {} as Record<string, { mushrooms: number; mycelium: number }>);
+
+      res.json(monthlyData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch production analytics" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
