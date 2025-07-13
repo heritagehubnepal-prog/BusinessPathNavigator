@@ -28,12 +28,16 @@ export default function Sidebar() {
 
   return (
     <div className="w-64 bg-slate text-slate-foreground shadow-xl">
-      <div className="p-6 border-b border-gray-600">
+      <div className="p-6 border-b border-gray-600 mycelium-network">
         <div className="flex items-center space-x-3">
-          <Sprout className="text-primary text-2xl" />
+          <div className="relative">
+            <Sprout className="text-primary text-2xl" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-spore-gold rounded-full animate-pulse"></div>
+          </div>
           <div>
-            <h1 className="text-xl font-bold">Mycopath</h1>
-            <p className="text-xs text-gray-300">Management System</p>
+            <h1 className="text-xl font-bold text-forest-green">Mycopath</h1>
+            <p className="text-xs text-gray-300">🍄 Mushroom Innovation Lab</p>
+            <p className="text-xs text-spore-gold">🇳🇵 From Nepal's Mountains</p>
           </div>
         </div>
       </div>

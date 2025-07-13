@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Edit2, Trash2, ShoppingCart, Users, Package } from "lucide-react";
+import { Plus, Edit2, Trash2, ShoppingCart, Users, Package, Leaf, Microscope, Heart, Brain, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -162,10 +162,87 @@ export default function Sales() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Hero Section with Educational Content */}
+      <div className="relative overflow-hidden rounded-2xl mushroom-gradient p-8 text-white">
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <Leaf className="h-8 w-8" />
+            <div>
+              <h1 className="text-3xl font-bold">Mycopath Premium Products</h1>
+              <p className="text-white/90">Nature's Innovation Lab - From Nepal's Mountains</p>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 mt-6">
+            <div>
+              <h3 className="text-xl font-semibold mb-3">🍄 About Our Mushrooms</h3>
+              <p className="text-white/90 leading-relaxed">
+                Grown in the pristine environment of Nepal's mountains, our mushrooms are cultivated using 
+                traditional wisdom combined with modern mycelium science. Each variety offers unique nutritional 
+                benefits and contributes to sustainable agriculture.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold mb-3">🔬 Mycelium Innovation</h3>
+              <p className="text-white/90 leading-relaxed">
+                Our mycelium lab develops revolutionary bio-materials and supplements. From packaging 
+                alternatives to health supplements, we're pioneering the future of sustainable innovation 
+                through fungal networks.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="absolute inset-0 spore-pattern opacity-20"></div>
+      </div>
+
+      {/* Health Benefits Section */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card className="border-forest-green/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-forest-green">
+              <Heart className="h-5 w-5" />
+              Heart Health
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Rich in beta-glucans, our mushrooms support cardiovascular health and help maintain healthy cholesterol levels.
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-spore-gold/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-spore-gold">
+              <Brain className="h-5 w-5" />
+              Brain Function
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Lion's Mane and other varieties contain compounds that support cognitive function and neural health.
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-mushroom-brown/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-mushroom-brown">
+              <Shield className="h-5 w-5" />
+              Immune Support
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Packed with antioxidants and polysaccharides that naturally boost your immune system's defenses.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Sales Management</h1>
-          <p className="text-muted-foreground">Manage customers, products, and orders</p>
+          <h2 className="text-2xl font-bold">Product Catalog & Customer Management</h2>
+          <p className="text-muted-foreground">Manage our premium mushroom products and valued customers</p>
         </div>
       </div>
 
@@ -209,11 +286,49 @@ export default function Sales() {
 
         <TabsContent value="customers" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Customer Management</h2>
+            <div>
+              <h2 className="text-xl font-semibold">Customer Community</h2>
+              <p className="text-sm text-muted-foreground">Building relationships with mushroom enthusiasts and businesses</p>
+            </div>
             <Button onClick={() => openCustomerDialog()}>
               <Plus className="h-4 w-4 mr-2" />
               Add Customer
             </Button>
+          </div>
+
+          {/* Customer Education Section */}
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg border border-green-200 mb-6">
+            <h3 className="text-lg font-semibold text-forest-green mb-4">🌱 Why Choose Mycopath Mushrooms?</h3>
+            <div className="grid md:grid-cols-2 gap-6 text-sm">
+              <div>
+                <h4 className="font-medium text-mushroom-brown mb-2">🏔️ Mountain-Grown Quality</h4>
+                <p className="text-muted-foreground">
+                  Our mushrooms are cultivated in Nepal's pristine mountain environment, where clean air and 
+                  optimal conditions create nutrient-dense, high-quality fungi with superior taste and health benefits.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-mushroom-brown mb-2">🔬 Science-Backed Cultivation</h4>
+                <p className="text-muted-foreground">
+                  Using advanced mycelium research and traditional wisdom, we optimize growing conditions 
+                  to maximize bioactive compounds like beta-glucans, polysaccharides, and adaptogens.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-mushroom-brown mb-2">🌍 Sustainable Innovation</h4>
+                <p className="text-muted-foreground">
+                  Beyond food, our mycelium lab creates eco-friendly materials like biodegradable packaging, 
+                  leather alternatives, and building materials, supporting a circular economy.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-mushroom-brown mb-2">💚 Health & Wellness</h4>
+                <p className="text-muted-foreground">
+                  Rich in protein, antioxidants, and immune-supporting compounds, our mushrooms offer 
+                  natural solutions for cognitive health, stress management, and overall vitality.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-4">
@@ -263,11 +378,59 @@ export default function Sales() {
 
         <TabsContent value="products" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Product Catalog</h2>
+            <div>
+              <h2 className="text-xl font-semibold">Premium Mushroom Catalog</h2>
+              <p className="text-sm text-muted-foreground">Sustainably grown, scientifically optimized</p>
+            </div>
             <Button onClick={() => openProductDialog()}>
               <Plus className="h-4 w-4 mr-2" />
               Add Product
             </Button>
+          </div>
+
+          {/* Educational Product Categories */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  🍄 Fresh Varieties
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs space-y-1">
+                <div>• <strong>Oyster:</strong> High protein, immune boost</div>
+                <div>• <strong>Shiitake:</strong> Heart health, umami rich</div>
+                <div>• <strong>Lion's Mane:</strong> Brain function support</div>
+                <div>• <strong>Reishi:</strong> Stress relief, longevity</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  ✨ Processing Methods
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs space-y-1">
+                <div>• <strong>Air-dried:</strong> Preserves nutrients</div>
+                <div>• <strong>Freeze-dried:</strong> Maximum potency</div>
+                <div>• <strong>Extract powder:</strong> Concentrated benefits</div>
+                <div>• <strong>Capsules:</strong> Convenient dosing</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  🔬 Innovation Lab
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs space-y-1">
+                <div>• <strong>Bio-packaging:</strong> Plastic alternative</div>
+                <div>• <strong>Leather substitute:</strong> Mycelium-based</div>
+                <div>• <strong>Building materials:</strong> Sustainable blocks</div>
+                <div>• <strong>Research kits:</strong> Educational tools</div>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="grid gap-4">
@@ -535,9 +698,12 @@ export default function Sales() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="fresh_mushrooms">Fresh Mushrooms</SelectItem>
-                          <SelectItem value="powder">Powder</SelectItem>
-                          <SelectItem value="packaging_kit">Packaging Kit</SelectItem>
+                          <SelectItem value="fresh_mushrooms">🍄 Fresh Mushrooms</SelectItem>
+                          <SelectItem value="powder">✨ Mushroom Powder & Extracts</SelectItem>
+                          <SelectItem value="packaging_kit">📦 Mycelium Packaging Materials</SelectItem>
+                          <SelectItem value="supplements">💊 Health Supplements</SelectItem>
+                          <SelectItem value="growing_kits">🌱 Home Growing Kits</SelectItem>
+                          <SelectItem value="biomaterials">🔬 Bio-materials & Research</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>

@@ -51,6 +51,7 @@ The application uses a well-structured PostgreSQL schema with the following main
 - **Inventory**: Stock level monitoring and item management
 - **Financial**: Transaction tracking and financial analytics
 - **Tasks**: Task and milestone management system
+- **Sales**: Comprehensive sales management with customer education and mushroom-themed product catalog
 - **Analytics**: Advanced data visualization and insights
 - **Reports**: Comprehensive reporting with export capabilities
 
@@ -128,3 +129,19 @@ RESTful API endpoints following conventional patterns:
 **Query-Based State**: TanStack Query handles all server state, providing caching, background updates, and error handling.
 
 The system is designed for scalability and maintainability, with clear separation of concerns and strong typing throughout the stack.
+
+### Recent Updates (July 2025)
+
+**Mushroom-Themed Sales Management & Customer Education:**
+- Implemented comprehensive sales management with customers, products, and orders
+- Added mushroom-themed branding and color scheme inspired by Nepal's mountain environment
+- Created educational content about mushroom varieties, health benefits, and mycelium innovation
+- Enhanced product categories to include fresh mushrooms, extracts, bio-materials, and growing kits
+- Added customer education sections highlighting mountain-grown quality and sustainable practices
+- Integrated nature-inspired design elements with mycelium network patterns and spore gradients
+- Updated sidebar with animated Nepal mountain branding and innovation lab messaging
+
+**User Preferences:**
+- Preferred communication style: Simple, everyday language
+- Focus on mushroom and mycelium business education for consumers
+- Nepal mountain environment and sustainability themes

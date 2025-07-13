@@ -30,6 +30,10 @@
   --slate: hsl(180, 25%, 25%);
   --slate-foreground: hsl(0, 0%, 100%);
   --earth: hsl(47, 33%, 97%);
+  --mushroom-brown: hsl(25, 30%, 25%);
+  --mycelium-white: hsl(48, 15%, 95%);
+  --forest-green: hsl(120, 25%, 30%);
+  --spore-gold: hsl(45, 65%, 60%);
 }
 
 .dark {
@@ -102,5 +106,55 @@
   
   .bg-earth {
     background-color: var(--earth);
+  }
+  
+  /* Mushroom-themed utilities */
+  .bg-mushroom-brown {
+    background-color: var(--mushroom-brown);
+  }
+  
+  .text-mushroom-brown {
+    color: var(--mushroom-brown);
+  }
+  
+  .bg-mycelium-white {
+    background-color: var(--mycelium-white);
+  }
+  
+  .text-mycelium-white {
+    color: var(--mycelium-white);
+  }
+  
+  .bg-forest-green {
+    background-color: var(--forest-green);
+  }
+  
+  .text-forest-green {
+    color: var(--forest-green);
+  }
+  
+  .bg-spore-gold {
+    background-color: var(--spore-gold);
+  }
+  
+  .text-spore-gold {
+    color: var(--spore-gold);
+  }
+  
+  /* Mushroom gradient backgrounds */
+  .mushroom-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  }
+  
+  .mycelium-network {
+    background-image: 
+      linear-gradient(30deg, transparent 40%, hsl(var(--primary) / 0.1) 41%, hsl(var(--primary) / 0.1) 42%, transparent 43%),
+      linear-gradient(150deg, transparent 40%, hsl(var(--primary) / 0.1) 41%, hsl(var(--primary) / 0.1) 42%, transparent 43%);
+    background-size: 30px 30px;
+  }
+  
+  .spore-pattern {
+    background-image: radial-gradient(circle at 2px 2px, hsl(var(--accent) / 0.3) 1px, transparent 0);
+    background-size: 15px 15px;
   }
 }
