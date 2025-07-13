@@ -1,4 +1,5 @@
 import {
+  locations,
   users,
   productionBatches,
   inventory,
@@ -10,6 +11,8 @@ import {
   products,
   orders,
   orderItems,
+  type Location,
+  type InsertLocation,
   type User,
   type InsertUser,
   type ProductionBatch,
@@ -37,6 +40,13 @@ import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
+  // Locations
+  getLocations(): Promise<Location[]>;
+  getLocation(id: number): Promise<Location | undefined>;
+  createLocation(location: InsertLocation): Promise<Location>;
+  updateLocation(id: number, location: Partial<InsertLocation>): Promise<Location | undefined>;
+  deleteLocation(id: number): Promise<boolean>;
+
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -112,6 +122,7 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  private locations: Map<number, Location>;
   private users: Map<number, User>;
   private productionBatches: Map<number, ProductionBatch>;
   private inventory: Map<number, Inventory>;
@@ -126,6 +137,7 @@ export class MemStorage implements IStorage {
   private currentId: number;
 
   constructor() {
+    this.locations = new Map();
     this.users = new Map();
     this.productionBatches = new Map();
     this.inventory = new Map();
@@ -144,6 +156,56 @@ export class MemStorage implements IStorage {
   }
 
   private initializeDefaultData() {
+    // Initialize default locations
+    const defaultLocations: InsertLocation[] = [
+      {
+        name: "Main Farm - Kathmandu",
+        type: "farm",
+        address: "Kathmandu Valley Production Site",
+        city: "Kathmandu",
+        state: "Bagmati Province",
+        country: "Nepal",
+        contactPerson: "Akash Rai",
+        phone: "+977-1-234567",
+        capacity: "500 kg/month",
+        isActive: true,
+        establishedDate: new Date("2024-01-01"),
+        notes: "Primary production facility with optimal growing conditions",
+      },
+      {
+        name: "Processing Center",
+        type: "processing",
+        address: "Industrial Area, Kathmandu",
+        city: "Kathmandu", 
+        state: "Bagmati Province",
+        country: "Nepal",
+        contactPerson: "Haris Gurung",
+        phone: "+977-1-345678",
+        capacity: "1000 kg/day processing",
+        isActive: true,
+        establishedDate: new Date("2024-06-01"),
+        notes: "Value-added product processing and packaging facility",
+      },
+      {
+        name: "Warehouse - Pokhara",
+        type: "warehouse",
+        address: "Storage District, Pokhara",
+        city: "Pokhara",
+        state: "Gandaki Province", 
+        country: "Nepal",
+        contactPerson: "Nishant Silwal",
+        phone: "+977-61-567890",
+        capacity: "2000 kg storage",
+        isActive: true,
+        establishedDate: new Date("2024-09-01"),
+        notes: "Regional distribution center for western Nepal",
+      },
+    ];
+
+    defaultLocations.forEach(location => {
+      this.createLocation(location);
+    });
+
     // Initialize some milestones based on business plan
     const defaultMilestones: InsertMilestone[] = [
       {
@@ -200,6 +262,53 @@ export class MemStorage implements IStorage {
     });
   }
 
+  // Locations
+  async getLocations(): Promise<Location[]> {
+    return Array.from(this.locations.values()).sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }
+
+  async getLocation(id: number): Promise<Location | undefined> {
+    return this.locations.get(id);
+  }
+
+  async createLocation(insertLocation: InsertLocation): Promise<Location> {
+    const id = this.currentId++;
+    const location: Location = { 
+      ...insertLocation, 
+      id,
+      address: insertLocation.address || null,
+      city: insertLocation.city || null,
+      state: insertLocation.state || null,
+      country: insertLocation.country || "Nepal",
+      postalCode: insertLocation.postalCode || null,
+      contactPerson: insertLocation.contactPerson || null,
+      phone: insertLocation.phone || null,
+      email: insertLocation.email || null,
+      capacity: insertLocation.capacity || null,
+      isActive: insertLocation.isActive ?? true,
+      establishedDate: insertLocation.establishedDate || null,
+      notes: insertLocation.notes || null,
+      createdAt: new Date(),
+    };
+    this.locations.set(id, location);
+    return location;
+  }
+
+  async updateLocation(id: number, updateLocation: Partial<InsertLocation>): Promise<Location | undefined> {
+    const existing = this.locations.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updateLocation };
+    this.locations.set(id, updated);
+    return updated;
+  }
+
+  async deleteLocation(id: number): Promise<boolean> {
+    return this.locations.delete(id);
+  }
+
   // Users
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
@@ -220,6 +329,7 @@ export class MemStorage implements IStorage {
       firstName: insertUser.firstName || null,
       lastName: insertUser.lastName || null,
       role: insertUser.role || "worker",
+      locationId: insertUser.locationId || null,
       isActive: insertUser.isActive ?? true,
       createdAt: new Date(),
     };
@@ -252,6 +362,7 @@ export class MemStorage implements IStorage {
     const batch: ProductionBatch = { 
       ...insertBatch, 
       id, 
+      locationId: insertBatch.locationId || null,
       createdAt: new Date(),
       expectedHarvestDate: insertBatch.expectedHarvestDate || null,
       actualHarvestDate: insertBatch.actualHarvestDate || null,
@@ -313,6 +424,7 @@ export class MemStorage implements IStorage {
     const item: Inventory = { 
       ...insertItem, 
       id, 
+      locationId: insertItem.locationId || null,
       lastUpdated: new Date(),
       minimumStock: insertItem.minimumStock || null,
       costPerUnit: insertItem.costPerUnit || null,
@@ -666,6 +778,38 @@ export class MemStorage implements IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Locations
+  async getLocations(): Promise<Location[]> {
+    return await db.select().from(locations).orderBy(desc(locations.createdAt));
+  }
+
+  async getLocation(id: number): Promise<Location | undefined> {
+    const [location] = await db.select().from(locations).where(eq(locations.id, id));
+    return location;
+  }
+
+  async createLocation(insertLocation: InsertLocation): Promise<Location> {
+    const [location] = await db
+      .insert(locations)
+      .values(insertLocation)
+      .returning();
+    return location;
+  }
+
+  async updateLocation(id: number, updateLocation: Partial<InsertLocation>): Promise<Location | undefined> {
+    const [location] = await db
+      .update(locations)
+      .set(updateLocation)
+      .where(eq(locations.id, id))
+      .returning();
+    return location;
+  }
+
+  async deleteLocation(id: number): Promise<boolean> {
+    const result = await db.delete(locations).where(eq(locations.id, id));
+    return result.rowCount! > 0;
+  }
+
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;

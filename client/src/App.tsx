@@ -12,6 +12,7 @@ import Tasks from "@/pages/tasks";
 import Analytics from "@/pages/analytics";
 import Reports from "@/pages/reports";
 import Sales from "@/pages/sales";
+import Locations from "@/pages/locations";
 import Sidebar from "@/components/layout/sidebar";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
           <Route path="/financial" component={Financial} />
           <Route path="/tasks" component={Tasks} />
           <Route path="/sales" component={Sales} />
+          <Route path="/locations" component={Locations} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/reports" component={Reports} />
           <Route component={NotFound} />

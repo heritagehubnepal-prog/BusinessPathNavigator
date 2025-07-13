@@ -2,6 +2,26 @@ import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar } 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Locations table for multi-location support
+export const locations = pgTable("locations", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // farm, warehouse, processing, office, retail
+  address: text("address"),
+  city: varchar("city", { length: 50 }),
+  state: varchar("state", { length: 50 }),
+  country: varchar("country", { length: 50 }).default("Nepal"),
+  postalCode: varchar("postal_code", { length: 20 }),
+  contactPerson: varchar("contact_person", { length: 100 }),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 100 }),
+  capacity: varchar("capacity", { length: 100 }), // Storage/production capacity
+  isActive: boolean("is_active").default(true),
+  establishedDate: timestamp("established_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -10,6 +30,7 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   role: varchar("role", { length: 20 }).notNull().default("worker"), // admin, manager, production, finance, sales, worker
+  locationId: integer("location_id").references(() => locations.id), // User's primary location
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -19,6 +40,7 @@ export const productionBatches = pgTable("production_batches", {
   batchNumber: varchar("batch_number", { length: 50 }).notNull().unique(),
   productType: varchar("product_type", { length: 100 }).notNull(),
   substrate: varchar("substrate", { length: 100 }).notNull(),
+  locationId: integer("location_id").references(() => locations.id), // Production location
   startDate: timestamp("start_date").notNull(),
   expectedHarvestDate: timestamp("expected_harvest_date"),
   actualHarvestDate: timestamp("actual_harvest_date"),
@@ -34,6 +56,7 @@ export const inventory = pgTable("inventory", {
   id: serial("id").primaryKey(),
   itemName: varchar("item_name", { length: 100 }).notNull(),
   category: varchar("category", { length: 50 }).notNull(), // substrate, spawn, tools, packaging
+  locationId: integer("location_id").references(() => locations.id), // Storage location
   currentStock: decimal("current_stock", { precision: 10, scale: 2 }).notNull(),
   unit: varchar("unit", { length: 20 }).notNull(), // kg, pieces, liters
   minimumStock: decimal("minimum_stock", { precision: 10, scale: 2 }),
@@ -147,6 +170,11 @@ export const orderItems = pgTable("order_items", {
 });
 
 // Insert schemas
+export const insertLocationSchema = createInsertSchema(locations).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -203,6 +231,8 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
 });
 
 // Types
+export type Location = typeof locations.$inferSelect;
+export type InsertLocation = z.infer<typeof insertLocationSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type ProductionBatch = typeof productionBatches.$inferSelect;

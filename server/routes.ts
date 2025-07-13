@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
+  insertLocationSchema,
   insertProductionBatchSchema,
   insertInventorySchema,
   insertFinancialTransactionSchema,
@@ -14,6 +15,66 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Locations
+  app.get("/api/locations", async (req, res) => {
+    try {
+      const locations = await storage.getLocations();
+      res.json(locations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch locations" });
+    }
+  });
+
+  app.get("/api/locations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const location = await storage.getLocation(id);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+      res.json(location);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch location" });
+    }
+  });
+
+  app.post("/api/locations", async (req, res) => {
+    try {
+      const validatedData = insertLocationSchema.parse(req.body);
+      const location = await storage.createLocation(validatedData);
+      res.status(201).json(location);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid location data", error });
+    }
+  });
+
+  app.patch("/api/locations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertLocationSchema.partial().parse(req.body);
+      const location = await storage.updateLocation(id, validatedData);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+      res.json(location);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid location data", error });
+    }
+  });
+
+  app.delete("/api/locations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteLocation(id);
+      if (!success) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+      res.json({ message: "Location deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete location" });
+    }
+  });
+
   // Production Batches
   app.get("/api/production-batches", async (req, res) => {
     try {
