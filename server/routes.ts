@@ -494,11 +494,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders
   app.get("/api/orders", async (req, res) => {
     try {
-      const orders = await storage.getOrders();
+      const { status, source } = req.query;
+      let orders = await storage.getOrders();
+      
+      // Filter by status if provided
+      if (status) {
+        orders = orders.filter(order => order.status === status);
+      }
+      
+      // Filter by source (online, in-person, phone) if provided  
+      if (source) {
+        orders = orders.filter(order => order.source === source);
+      }
+      
       res.json(orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
       res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // API endpoint for receiving online orders (for integration with e-commerce)
+  app.post("/api/orders/online", async (req, res) => {
+    try {
+      const { customer, items, ...orderData } = req.body;
+      
+      // Create or find customer
+      let customerId = customer.id;
+      if (!customerId && customer.email) {
+        const existingCustomer = (await storage.getCustomers())
+          .find(c => c.email === customer.email);
+        
+        if (existingCustomer) {
+          customerId = existingCustomer.id;
+        } else {
+          const newCustomer = await storage.createCustomer({
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone || "",
+            address: customer.address || "",
+            customerType: "individual",
+            source: "online",
+            isActive: true,
+          });
+          customerId = newCustomer.id;
+        }
+      }
+      
+      // Create order with online source
+      const validatedOrderData = insertOrderSchema.parse({
+        ...orderData,
+        customerId,
+        orderType: "online",
+        status: "pending",
+        paymentStatus: "pending",
+        orderDate: new Date(),
+      });
+      
+      const validatedItems = items.map((item: any) => 
+        insertOrderItemSchema.parse(item)
+      );
+      
+      const order = await storage.createOrder(validatedOrderData, validatedItems);
+      
+      // Send confirmation response
+      res.status(201).json({
+        success: true,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        message: "Order received successfully",
+        order,
+      });
+    } catch (error) {
+      console.error("Error processing online order:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to process order",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

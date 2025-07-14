@@ -373,6 +373,119 @@ export class MemStorage implements IStorage {
     defaultTransactions.forEach(transaction => {
       this.createFinancialTransaction(transaction);
     });
+
+    // Add sample customers and products for sales management
+    const defaultCustomers: InsertCustomer[] = [
+      {
+        name: "Organic Market Kathmandu",
+        email: "orders@organicmarket.com.np",
+        phone: "+977-1-4567890",
+        address: "Thamel, Kathmandu",
+        customerType: "business",
+        source: "business",
+        preferredPayment: "bank_transfer",
+        isActive: true,
+      },
+      {
+        name: "Ram Bahadur Thapa",
+        email: "ram.thapa@gmail.com", 
+        phone: "+977-9801234567",
+        address: "Lalitpur",
+        customerType: "individual",
+        source: "online",
+        preferredPayment: "esewa",
+        isActive: true,
+      },
+    ];
+
+    defaultCustomers.forEach(customer => {
+      this.createCustomer(customer);
+    });
+
+    const defaultProducts: InsertProduct[] = [
+      {
+        name: "Fresh Oyster Mushrooms",
+        category: "fresh_mushrooms",
+        description: "Locally grown organic oyster mushrooms",
+        sellingPrice: "450.00",
+        costPrice: "200.00",
+        unit: "kg",
+        currentStock: "25",
+        minimumStock: "5",
+        isActive: true,
+      },
+      {
+        name: "Premium Shiitake",
+        category: "fresh_mushrooms", 
+        description: "Premium quality shiitake mushrooms",
+        sellingPrice: "800.00",
+        costPrice: "350.00",
+        unit: "kg",
+        currentStock: "15",
+        minimumStock: "3",
+        isActive: true,
+      },
+      {
+        name: "Mushroom Growing Kit",
+        category: "growing_kits",
+        description: "Complete oyster mushroom growing kit for home",
+        sellingPrice: "1200.00",
+        costPrice: "600.00",
+        unit: "kit",
+        currentStock: "10",
+        minimumStock: "2",
+        isActive: true,
+      },
+    ];
+
+    defaultProducts.forEach(product => {
+      this.createProduct(product);
+    });
+
+    // Add sample orders
+    const defaultOrders: InsertOrder[] = [
+      {
+        orderNumber: "ORD-2024-001",
+        customerId: 1,
+        status: "completed",
+        source: "business",
+        totalAmount: "2250.00",
+        paymentStatus: "paid",
+        deliveryAddress: "Thamel, Kathmandu",
+        orderDate: new Date("2024-01-20"),
+        notes: "Regular business customer - weekly order",
+      },
+      {
+        orderNumber: "ORD-2024-002",
+        customerId: 2,
+        status: "pending", 
+        source: "online",
+        totalAmount: "1650.00",
+        paymentStatus: "pending",
+        deliveryAddress: "Lalitpur",
+        orderDate: new Date("2024-01-28"),
+        notes: "First-time online customer",
+      },
+    ];
+
+    // Create orders with items
+    defaultOrders.forEach((order, index) => {
+      const items: InsertOrderItem[] = [
+        {
+          productId: 1,
+          quantity: "5",
+          unitPrice: "450.00",
+          totalPrice: "2250.00",
+        },
+        {
+          productId: 2,
+          quantity: "2",
+          unitPrice: "800.00", 
+          totalPrice: "1600.00",
+        },
+      ];
+      this.createOrder(order, [items[index]]);
+    });
   }
 
   // Locations
