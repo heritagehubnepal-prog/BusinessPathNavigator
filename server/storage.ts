@@ -610,6 +610,47 @@ export class MemStorage implements IStorage {
     defaultAttendance.forEach(attendance => {
       this.createAttendance(attendance);
     });
+
+    // Add sample payroll records
+    const defaultPayroll: InsertPayroll[] = [
+      {
+        employeeId: 1,
+        period: "2024-12",
+        basicSalary: "45000.00",
+        allowances: "5000.00",
+        deductions: "4500.00",
+        netPay: "45500.00",
+        status: "paid",
+        payDate: new Date("2024-12-30"),
+        notes: "December 2024 salary",
+      },
+      {
+        employeeId: 2,
+        period: "2024-12",
+        basicSalary: "40000.00",
+        allowances: "4000.00",
+        deductions: "4000.00",
+        netPay: "40000.00",
+        status: "paid",
+        payDate: new Date("2024-12-30"),
+        notes: "December 2024 salary",
+      },
+      {
+        employeeId: 3,
+        period: "2024-12",
+        basicSalary: "42000.00",
+        allowances: "4200.00",
+        deductions: "4200.00",
+        netPay: "42000.00",
+        status: "paid",
+        payDate: new Date("2024-12-30"),
+        notes: "December 2024 salary",
+      },
+    ];
+
+    defaultPayroll.forEach(payroll => {
+      this.createPayroll(payroll);
+    });
   }
 
   // Locations

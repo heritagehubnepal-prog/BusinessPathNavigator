@@ -469,7 +469,7 @@ export default function HRPage() {
             </div>
 
             <div className="grid gap-6">
-              {employees?.map((employee: Employee) => (
+              {employees && Array.isArray(employees) ? employees.map((employee: Employee) => (
                 <Card key={employee.id} className="glass-card">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
@@ -516,7 +516,11 @@ export default function HRPage() {
                     )}
                   </CardContent>
                 </Card>
-              ))}
+              )) : (
+                <div className="text-center py-8 text-gray-500">
+                  No employees found. Add your first employee to get started!
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -540,7 +544,7 @@ export default function HRPage() {
             </div>
 
             <div className="grid gap-4">
-              {attendance?.map((record: Attendance) => {
+              {attendance && Array.isArray(attendance) ? attendance.map((record: Attendance) => {
                 const employee = employees?.find((emp: Employee) => emp.id === record.employeeId);
                 return (
                   <Card key={record.id} className="glass-card">
@@ -579,7 +583,11 @@ export default function HRPage() {
                     </CardContent>
                   </Card>
                 );
-              })}
+              }) : (
+                <div className="text-center py-8 text-gray-500">
+                  No attendance records found. Record attendance to get started!
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -593,7 +601,7 @@ export default function HRPage() {
             </div>
 
             <div className="grid gap-4">
-              {payroll?.map((record: Payroll) => {
+              {payroll && Array.isArray(payroll) ? payroll.map((record: Payroll) => {
                 const employee = employees?.find((emp: Employee) => emp.id === record.employeeId);
                 return (
                   <Card key={record.id} className="glass-card">
@@ -632,7 +640,11 @@ export default function HRPage() {
                     </CardContent>
                   </Card>
                 );
-              })}
+              }) : (
+                <div className="text-center py-8 text-gray-500">
+                  No payroll records found. Generate payroll to get started!
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

@@ -726,6 +726,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // HR Management - Payroll
+  app.get('/api/payroll', async (req, res) => {
+    try {
+      const payroll = await storage.getPayroll();
+      res.json(payroll);
+    } catch (error) {
+      console.error('Error fetching payroll:', error);
+      res.status(500).json({ error: 'Failed to fetch payroll' });
+    }
+  });
+
+  app.post('/api/payroll', async (req, res) => {
+    try {
+      const validatedData = insertPayrollSchema.parse(req.body);
+      const payroll = await storage.createPayroll(validatedData);
+      res.status(201).json(payroll);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      console.error('Error creating payroll:', error);
+      res.status(500).json({ error: 'Failed to create payroll' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
