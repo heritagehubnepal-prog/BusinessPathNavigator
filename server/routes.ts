@@ -12,7 +12,11 @@ import {
   insertProductSchema,
   insertOrderSchema,
   insertOrderItemSchema,
+  insertEmployeeSchema,
+  insertAttendanceSchema,
+  insertPayrollSchema,
 } from "@shared/schema";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Locations
@@ -652,6 +656,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting order:", error);
       res.status(500).json({ message: "Failed to delete order" });
+    }
+  });
+
+  // HR Management - Employees
+  app.get('/api/employees', async (req, res) => {
+    try {
+      const employees = await storage.getEmployees();
+      res.json(employees);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      res.status(500).json({ error: 'Failed to fetch employees' });
+    }
+  });
+
+  app.post('/api/employees', async (req, res) => {
+    try {
+      const validatedData = insertEmployeeSchema.parse(req.body);
+      const employee = await storage.createEmployee(validatedData);
+      res.status(201).json(employee);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      console.error('Error creating employee:', error);
+      res.status(500).json({ error: 'Failed to create employee' });
+    }
+  });
+
+  app.patch('/api/employees/:id', async (req, res) => {
+    try {
+      const validatedData = insertEmployeeSchema.partial().parse(req.body);
+      const employee = await storage.updateEmployee(parseInt(req.params.id), validatedData);
+      if (!employee) {
+        return res.status(404).json({ error: 'Employee not found' });
+      }
+      res.json(employee);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      console.error('Error updating employee:', error);
+      res.status(500).json({ error: 'Failed to update employee' });
+    }
+  });
+
+  // HR Management - Attendance
+  app.get('/api/attendance', async (req, res) => {
+    try {
+      const attendance = await storage.getAttendance();
+      res.json(attendance);
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+      res.status(500).json({ error: 'Failed to fetch attendance' });
+    }
+  });
+
+  app.post('/api/attendance', async (req, res) => {
+    try {
+      const validatedData = insertAttendanceSchema.parse(req.body);
+      const attendance = await storage.createAttendance(validatedData);
+      res.status(201).json(attendance);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      console.error('Error creating attendance:', error);
+      res.status(500).json({ error: 'Failed to create attendance' });
     }
   });
 

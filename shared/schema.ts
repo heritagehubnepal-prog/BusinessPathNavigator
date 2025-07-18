@@ -94,13 +94,22 @@ export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
-  priority: varchar("priority", { length: 20 }).notNull(), // low, medium, high
-  status: varchar("status", { length: 20 }).notNull(), // pending, in_progress, completed
+  priority: varchar("priority", { length: 20 }).notNull(), // low, medium, high, urgent
+  status: varchar("status", { length: 20 }).notNull(), // pending, in_progress, completed, cancelled
   assignedTo: varchar("assigned_to", { length: 100 }),
+  assignedToId: integer("assigned_to_id").references(() => employees.id),
+  estimatedHours: decimal("estimated_hours", { precision: 4, scale: 1 }),
+  actualHours: decimal("actual_hours", { precision: 4, scale: 1 }),
+  startDate: timestamp("start_date"),
   dueDate: timestamp("due_date"),
   completedDate: timestamp("completed_date"),
   batchId: integer("batch_id").references(() => productionBatches.id),
+  milestoneId: integer("milestone_id").references(() => milestones.id),
+  locationId: integer("location_id").references(() => locations.id),
+  category: varchar("category", { length: 50 }), // production, maintenance, quality_control, research
+  tags: text("tags"), // JSON array of tags
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const activities = pgTable("activities", {
@@ -109,6 +118,52 @@ export const activities = pgTable("activities", {
   description: text("description").notNull(),
   entityId: integer("entity_id"),
   entityType: varchar("entity_type", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Human Resource Management Tables
+export const employees = pgTable("employees", {
+  id: serial("id").primaryKey(),
+  employeeId: varchar("employee_id", { length: 20 }).unique().notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 100 }),
+  phone: varchar("phone", { length: 20 }),
+  position: varchar("position", { length: 50 }).notNull(),
+  department: varchar("department", { length: 50 }).notNull(),
+  salary: decimal("salary", { precision: 10, scale: 2 }),
+  hireDate: timestamp("hire_date").notNull(),
+  status: varchar("status", { length: 20 }).default("active"), // active, inactive, terminated
+  locationId: integer("location_id").references(() => locations.id),
+  supervisor: varchar("supervisor", { length: 100 }),
+  skills: text("skills"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const attendance = pgTable("attendance", {
+  id: serial("id").primaryKey(),
+  employeeId: integer("employee_id").references(() => employees.id),
+  date: timestamp("date").notNull(),
+  checkIn: timestamp("check_in"),
+  checkOut: timestamp("check_out"),
+  hoursWorked: decimal("hours_worked", { precision: 4, scale: 2 }),
+  status: varchar("status", { length: 20 }).notNull(), // present, absent, late, half_day
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const payroll = pgTable("payroll", {
+  id: serial("id").primaryKey(),
+  employeeId: integer("employee_id").references(() => employees.id),
+  payPeriod: varchar("pay_period", { length: 20 }).notNull(), // 2024-01, 2024-02
+  basicSalary: decimal("basic_salary", { precision: 10, scale: 2 }).notNull(),
+  overtime: decimal("overtime", { precision: 8, scale: 2 }).default("0"),
+  bonus: decimal("bonus", { precision: 8, scale: 2 }).default("0"),
+  deductions: decimal("deductions", { precision: 8, scale: 2 }).default("0"),
+  totalPay: decimal("total_pay", { precision: 10, scale: 2 }).notNull(),
+  payDate: timestamp("pay_date"),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, paid
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -230,6 +285,21 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
   createdAt: true,
 });
 
+export const insertEmployeeSchema = createInsertSchema(employees).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAttendanceSchema = createInsertSchema(attendance).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPayrollSchema = createInsertSchema(payroll).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type Location = typeof locations.$inferSelect;
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
@@ -257,3 +327,11 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+
+// Human Resource Management Types
+export type Employee = typeof employees.$inferSelect;
+export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
+export type Attendance = typeof attendance.$inferSelect;
+export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
+export type Payroll = typeof payroll.$inferSelect;
+export type InsertPayroll = z.infer<typeof insertPayrollSchema>;

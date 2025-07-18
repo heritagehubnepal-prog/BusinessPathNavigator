@@ -11,6 +11,9 @@ import {
   products,
   orders,
   orderItems,
+  employees,
+  attendance,
+  payroll,
   type Location,
   type InsertLocation,
   type User,
@@ -35,6 +38,12 @@ import {
   type InsertOrder,
   type OrderItem,
   type InsertOrderItem,
+  type Employee,
+  type InsertEmployee,
+  type Attendance,
+  type InsertAttendance,
+  type Payroll,
+  type InsertPayroll,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -119,6 +128,26 @@ export interface IStorage {
   addOrderItem(item: InsertOrderItem): Promise<OrderItem>;
   updateOrderItem(id: number, item: Partial<InsertOrderItem>): Promise<OrderItem | undefined>;
   deleteOrderItem(id: number): Promise<boolean>;
+
+  // Human Resource Management
+  getEmployees(): Promise<Employee[]>;
+  getEmployee(id: number): Promise<Employee | undefined>;
+  createEmployee(employee: InsertEmployee): Promise<Employee>;
+  updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined>;
+  deleteEmployee(id: number): Promise<boolean>;
+
+  getAttendance(): Promise<Attendance[]>;
+  getAttendanceByEmployee(employeeId: number): Promise<Attendance[]>;
+  getAttendanceByDate(date: Date): Promise<Attendance[]>;
+  createAttendance(attendance: InsertAttendance): Promise<Attendance>;
+  updateAttendance(id: number, attendance: Partial<InsertAttendance>): Promise<Attendance | undefined>;
+  deleteAttendance(id: number): Promise<boolean>;
+
+  getPayroll(): Promise<Payroll[]>;
+  getPayrollByEmployee(employeeId: number): Promise<Payroll[]>;
+  createPayroll(payroll: InsertPayroll): Promise<Payroll>;
+  updatePayroll(id: number, payroll: Partial<InsertPayroll>): Promise<Payroll | undefined>;
+  deletePayroll(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -134,6 +163,9 @@ export class MemStorage implements IStorage {
   private products: Map<number, Product>;
   private orders: Map<number, Order>;
   private orderItems: Map<number, OrderItem>;
+  private employees: Map<number, Employee>;
+  private attendance: Map<number, Attendance>;
+  private payroll: Map<number, Payroll>;
   private currentId: number;
 
   constructor() {
@@ -149,6 +181,9 @@ export class MemStorage implements IStorage {
     this.products = new Map();
     this.orders = new Map();
     this.orderItems = new Map();
+    this.employees = new Map();
+    this.attendance = new Map();
+    this.payroll = new Map();
     this.currentId = 1;
     
     // Initialize with some default data
@@ -485,6 +520,95 @@ export class MemStorage implements IStorage {
         },
       ];
       this.createOrder(order, [items[index]]);
+    });
+
+    // Add sample employees for HR management
+    const defaultEmployees: InsertEmployee[] = [
+      {
+        employeeId: "EMP001",
+        name: "Akash Rai",
+        email: "akash@mycopath.com.np",
+        phone: "+977-9801234567",
+        position: "Production Manager",
+        department: "Production",
+        salary: "45000.00",
+        hireDate: new Date("2024-01-15"),
+        status: "active",
+        locationId: 1,
+        skills: "Mushroom cultivation, Quality control, Team leadership",
+        notes: "Responsible for production operations and quality assurance",
+      },
+      {
+        employeeId: "EMP002", 
+        name: "Haris Gurung",
+        email: "haris@mycopath.com.np",
+        phone: "+977-9812345678",
+        position: "Marketing Manager",
+        department: "Marketing",
+        salary: "40000.00",
+        hireDate: new Date("2024-01-20"),
+        status: "active",
+        locationId: 1,
+        skills: "Digital marketing, Web development, Content creation",
+        notes: "Handles marketing campaigns and website management",
+      },
+      {
+        employeeId: "EMP003",
+        name: "Nishant Silwal",
+        email: "nishant@mycopath.com.np", 
+        phone: "+977-9823456789",
+        position: "Sales Manager",
+        department: "Sales",
+        salary: "42000.00",
+        hireDate: new Date("2024-02-01"),
+        status: "active",
+        locationId: 1,
+        skills: "International sales, Customer relations, Export documentation",
+        notes: "Manages international sales and export operations",
+      },
+    ];
+
+    defaultEmployees.forEach(employee => {
+      this.createEmployee(employee);
+    });
+
+    // Add sample attendance records
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const defaultAttendance: InsertAttendance[] = [
+      {
+        employeeId: 1,
+        date: today,
+        checkIn: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 0),
+        checkOut: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 17, 0),
+        hoursWorked: "9.00",
+        status: "present",
+        notes: "Regular day",
+      },
+      {
+        employeeId: 2,
+        date: today,
+        checkIn: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 30),
+        checkOut: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 17, 30),
+        hoursWorked: "9.00",
+        status: "present",
+        notes: "Late arrival due to traffic",
+      },
+      {
+        employeeId: 3,
+        date: yesterday,
+        checkIn: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 0),
+        checkOut: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 17, 0),
+        hoursWorked: "9.00",
+        status: "present",
+        notes: "Client meeting day",
+      },
+    ];
+
+    defaultAttendance.forEach(attendance => {
+      this.createAttendance(attendance);
     });
   }
 
@@ -1001,7 +1125,114 @@ export class MemStorage implements IStorage {
   async deleteOrderItem(id: number): Promise<boolean> {
     return this.orderItems.delete(id);
   }
+
+  // Human Resource Management
+  // Employees
+  async getEmployees(): Promise<Employee[]> {
+    return Array.from(this.employees.values()).sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }
+
+  async getEmployee(id: number): Promise<Employee | undefined> {
+    return this.employees.get(id);
+  }
+
+  async createEmployee(insertEmployee: InsertEmployee): Promise<Employee> {
+    const id = this.currentId++;
+    const employee: Employee = { ...insertEmployee, id, createdAt: new Date() };
+    this.employees.set(id, employee);
+    return employee;
+  }
+
+  async updateEmployee(id: number, insertEmployee: Partial<InsertEmployee>): Promise<Employee | undefined> {
+    const employee = this.employees.get(id);
+    if (!employee) return undefined;
+    
+    const updatedEmployee: Employee = { ...employee, ...insertEmployee };
+    this.employees.set(id, updatedEmployee);
+    return updatedEmployee;
+  }
+
+  async deleteEmployee(id: number): Promise<boolean> {
+    return this.employees.delete(id);
+  }
+
+  // Attendance
+  async getAttendance(): Promise<Attendance[]> {
+    return Array.from(this.attendance.values()).sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }
+
+  async getAttendanceByEmployee(employeeId: number): Promise<Attendance[]> {
+    return Array.from(this.attendance.values())
+      .filter(attendance => attendance.employeeId === employeeId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  async getAttendanceByDate(date: Date): Promise<Attendance[]> {
+    const dateStr = date.toISOString().split('T')[0];
+    return Array.from(this.attendance.values())
+      .filter(attendance => attendance.date.toISOString().split('T')[0] === dateStr);
+  }
+
+  async createAttendance(insertAttendance: InsertAttendance): Promise<Attendance> {
+    const id = this.currentId++;
+    const attendance: Attendance = { ...insertAttendance, id, createdAt: new Date() };
+    this.attendance.set(id, attendance);
+    return attendance;
+  }
+
+  async updateAttendance(id: number, insertAttendance: Partial<InsertAttendance>): Promise<Attendance | undefined> {
+    const attendance = this.attendance.get(id);
+    if (!attendance) return undefined;
+    
+    const updatedAttendance: Attendance = { ...attendance, ...insertAttendance };
+    this.attendance.set(id, updatedAttendance);
+    return updatedAttendance;
+  }
+
+  async deleteAttendance(id: number): Promise<boolean> {
+    return this.attendance.delete(id);
+  }
+
+  // Payroll
+  async getPayroll(): Promise<Payroll[]> {
+    return Array.from(this.payroll.values()).sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }
+
+  async getPayrollByEmployee(employeeId: number): Promise<Payroll[]> {
+    return Array.from(this.payroll.values())
+      .filter(payroll => payroll.employeeId === employeeId)
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+
+  async createPayroll(insertPayroll: InsertPayroll): Promise<Payroll> {
+    const id = this.currentId++;
+    const payroll: Payroll = { ...insertPayroll, id, createdAt: new Date() };
+    this.payroll.set(id, payroll);
+    return payroll;
+  }
+
+  async updatePayroll(id: number, insertPayroll: Partial<InsertPayroll>): Promise<Payroll | undefined> {
+    const payroll = this.payroll.get(id);
+    if (!payroll) return undefined;
+    
+    const updatedPayroll: Payroll = { ...payroll, ...insertPayroll };
+    this.payroll.set(id, updatedPayroll);
+    return updatedPayroll;
+  }
+
+  async deletePayroll(id: number): Promise<boolean> {
+    return this.payroll.delete(id);
+  }
 }
+
+// Use MemStorage for development
+export const storage = new MemStorage();
 
 export class DatabaseStorage implements IStorage {
   // Locations
@@ -1359,5 +1590,3 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 }
-
-export const storage = new MemStorage();

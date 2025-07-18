@@ -9,7 +9,8 @@ import {
   PieChart, 
   FileText,
   ShoppingCart,
-  MapPin
+  MapPin,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Tasks & Milestones", href: "/tasks", icon: CheckSquare },
   { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Locations", href: "/locations", icon: MapPin },
+  { name: "Human Resources", href: "/hr", icon: Users },
   { name: "Analytics", href: "/analytics", icon: PieChart },
   { name: "Reports", href: "/reports", icon: FileText },
 ];
