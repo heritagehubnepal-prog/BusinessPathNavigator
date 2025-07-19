@@ -280,11 +280,11 @@ function AttendanceForm({ onSuccess }: { onSuccess: () => void }) {
             <SelectValue placeholder="Select employee" />
           </SelectTrigger>
           <SelectContent>
-            {employees?.map((employee: Employee) => (
+            {employees && Array.isArray(employees) ? employees.map((employee: Employee) => (
               <SelectItem key={employee.id} value={employee.id.toString()}>
                 {employee.name} ({employee.employeeId})
               </SelectItem>
-            ))}
+            )) : null}
           </SelectContent>
         </Select>
       </div>
