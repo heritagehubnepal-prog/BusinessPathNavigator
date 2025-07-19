@@ -1,6 +1,8 @@
 import {
   locations,
   users,
+  roles,
+  userProfiles,
   productionBatches,
   inventory,
   financialTransactions,
@@ -18,6 +20,10 @@ import {
   type InsertLocation,
   type User,
   type InsertUser,
+  type Role,
+  type InsertRole,
+  type UserProfile,
+  type InsertUserProfile,
   type ProductionBatch,
   type InsertProductionBatch,
   type Inventory,
@@ -148,6 +154,27 @@ export interface IStorage {
   createPayroll(payroll: InsertPayroll): Promise<Payroll>;
   updatePayroll(id: number, payroll: Partial<InsertPayroll>): Promise<Payroll | undefined>;
   deletePayroll(id: number): Promise<boolean>;
+
+  // Role Management
+  getRoles(): Promise<Role[]>;
+  getRole(id: number): Promise<Role | undefined>;
+  getRoleByName(name: string): Promise<Role | undefined>;
+  createRole(role: InsertRole): Promise<Role>;
+  updateRole(id: number, role: Partial<InsertRole>): Promise<Role | undefined>;
+  deleteRole(id: number): Promise<boolean>;
+
+  // User Profile Management
+  getUserProfiles(): Promise<UserProfile[]>;
+  getUserProfile(id: number): Promise<UserProfile | undefined>;
+  getUserProfileByUserId(userId: number): Promise<UserProfile | undefined>;
+  createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+  updateUserProfile(id: number, profile: Partial<InsertUserProfile>): Promise<UserProfile | undefined>;
+  deleteUserProfile(id: number): Promise<boolean>;
+
+  // Enhanced User Methods with Role Support
+  getUserWithRole(id: number): Promise<(User & { role?: Role; profile?: UserProfile }) | undefined>;
+  getUsersWithRoles(): Promise<(User & { role?: Role; profile?: UserProfile })[]>;
+  updateUserRole(userId: number, roleId: number): Promise<User | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -1718,6 +1745,113 @@ export class DatabaseStorage implements IStorage {
   async deletePayroll(id: number): Promise<boolean> {
     await db.delete(payroll).where(eq(payroll.id, id));
     return true;
+  }
+
+  // Role Management
+  async getRoles(): Promise<Role[]> {
+    return await db.select().from(roles).orderBy(roles.displayName);
+  }
+
+  async getRole(id: number): Promise<Role | undefined> {
+    const [role] = await db.select().from(roles).where(eq(roles.id, id));
+    return role;
+  }
+
+  async getRoleByName(name: string): Promise<Role | undefined> {
+    const [role] = await db.select().from(roles).where(eq(roles.name, name));
+    return role;
+  }
+
+  async createRole(insertRole: InsertRole): Promise<Role> {
+    const [role] = await db.insert(roles).values(insertRole).returning();
+    return role;
+  }
+
+  async updateRole(id: number, updateRole: Partial<InsertRole>): Promise<Role | undefined> {
+    const [role] = await db.update(roles).set(updateRole).where(eq(roles.id, id)).returning();
+    return role;
+  }
+
+  async deleteRole(id: number): Promise<boolean> {
+    // Prevent deletion of system roles
+    const role = await this.getRole(id);
+    if (role?.isSystemRole) {
+      throw new Error("Cannot delete system role");
+    }
+    await db.delete(roles).where(eq(roles.id, id));
+    return true;
+  }
+
+  // User Profile Management
+  async getUserProfiles(): Promise<UserProfile[]> {
+    return await db.select().from(userProfiles).orderBy(desc(userProfiles.createdAt));
+  }
+
+  async getUserProfile(id: number): Promise<UserProfile | undefined> {
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.id, id));
+    return profile;
+  }
+
+  async getUserProfileByUserId(userId: number): Promise<UserProfile | undefined> {
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+    return profile;
+  }
+
+  async createUserProfile(insertProfile: InsertUserProfile): Promise<UserProfile> {
+    const [profile] = await db.insert(userProfiles).values(insertProfile).returning();
+    return profile;
+  }
+
+  async updateUserProfile(id: number, updateProfile: Partial<InsertUserProfile>): Promise<UserProfile | undefined> {
+    const [profile] = await db.update(userProfiles).set({
+      ...updateProfile,
+      updatedAt: new Date()
+    }).where(eq(userProfiles.id, id)).returning();
+    return profile;
+  }
+
+  async deleteUserProfile(id: number): Promise<boolean> {
+    await db.delete(userProfiles).where(eq(userProfiles.id, id));
+    return true;
+  }
+
+  // Enhanced User Methods with Role Support
+  async getUserWithRole(id: number): Promise<(User & { role?: Role; profile?: UserProfile }) | undefined> {
+    const [result] = await db.select()
+      .from(users)
+      .leftJoin(roles, eq(users.roleId, roles.id))
+      .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
+      .where(eq(users.id, id));
+    
+    if (!result) return undefined;
+
+    return {
+      ...result.users,
+      role: result.roles || undefined,
+      profile: result.user_profiles || undefined
+    };
+  }
+
+  async getUsersWithRoles(): Promise<(User & { role?: Role; profile?: UserProfile })[]> {
+    const results = await db.select()
+      .from(users)
+      .leftJoin(roles, eq(users.roleId, roles.id))
+      .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
+      .orderBy(users.firstName, users.lastName);
+
+    return results.map(result => ({
+      ...result.users,
+      role: result.roles || undefined,
+      profile: result.user_profiles || undefined
+    }));
+  }
+
+  async updateUserRole(userId: number, roleId: number): Promise<User | undefined> {
+    const [user] = await db.update(users).set({
+      roleId,
+      updatedAt: new Date()
+    }).where(eq(users.id, userId)).returning();
+    return user;
   }
 }
 

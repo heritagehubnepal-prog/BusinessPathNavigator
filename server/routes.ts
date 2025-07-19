@@ -747,6 +747,182 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Role Management API Routes
+  app.get('/api/roles', async (req, res) => {
+    try {
+      const roles = await storage.getRoles();
+      res.json(roles);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      res.status(500).json({ error: "Failed to fetch roles" });
+    }
+  });
+
+  app.get('/api/roles/:id', async (req, res) => {
+    try {
+      const role = await storage.getRole(parseInt(req.params.id));
+      if (!role) {
+        return res.status(404).json({ error: "Role not found" });
+      }
+      res.json(role);
+    } catch (error) {
+      console.error("Error fetching role:", error);
+      res.status(500).json({ error: "Failed to fetch role" });
+    }
+  });
+
+  app.post('/api/roles', async (req, res) => {
+    try {
+      const { insertRoleSchema } = await import("@shared/schema");
+      const validatedData = insertRoleSchema.parse(req.body);
+      const role = await storage.createRole(validatedData);
+      res.status(201).json(role);
+    } catch (error) {
+      console.error("Error creating role:", error);
+      res.status(400).json({ error: error instanceof Error ? error.message : "Failed to create role" });
+    }
+  });
+
+  app.patch('/api/roles/:id', async (req, res) => {
+    try {
+      const { insertRoleSchema } = await import("@shared/schema");
+      const validatedData = insertRoleSchema.partial().parse(req.body);
+      const role = await storage.updateRole(parseInt(req.params.id), validatedData);
+      if (!role) {
+        return res.status(404).json({ error: "Role not found" });
+      }
+      res.json(role);
+    } catch (error) {
+      console.error("Error updating role:", error);
+      res.status(400).json({ error: error instanceof Error ? error.message : "Failed to update role" });
+    }
+  });
+
+  app.delete('/api/roles/:id', async (req, res) => {
+    try {
+      const success = await storage.deleteRole(parseInt(req.params.id));
+      res.json({ success });
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      res.status(400).json({ error: error instanceof Error ? error.message : "Failed to delete role" });
+    }
+  });
+
+  // User Profile Management API Routes
+  app.get('/api/user-profiles', async (req, res) => {
+    try {
+      const profiles = await storage.getUserProfiles();
+      res.json(profiles);
+    } catch (error) {
+      console.error("Error fetching user profiles:", error);
+      res.status(500).json({ error: "Failed to fetch user profiles" });
+    }
+  });
+
+  app.get('/api/user-profiles/:id', async (req, res) => {
+    try {
+      const profile = await storage.getUserProfile(parseInt(req.params.id));
+      if (!profile) {
+        return res.status(404).json({ error: "User profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ error: "Failed to fetch user profile" });
+    }
+  });
+
+  app.get('/api/user-profiles/user/:userId', async (req, res) => {
+    try {
+      const profile = await storage.getUserProfileByUserId(parseInt(req.params.userId));
+      if (!profile) {
+        return res.status(404).json({ error: "User profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ error: "Failed to fetch user profile" });
+    }
+  });
+
+  app.post('/api/user-profiles', async (req, res) => {
+    try {
+      const { insertUserProfileSchema } = await import("@shared/schema");
+      const validatedData = insertUserProfileSchema.parse(req.body);
+      const profile = await storage.createUserProfile(validatedData);
+      res.status(201).json(profile);
+    } catch (error) {
+      console.error("Error creating user profile:", error);
+      res.status(400).json({ error: error instanceof Error ? error.message : "Failed to create user profile" });
+    }
+  });
+
+  app.patch('/api/user-profiles/:id', async (req, res) => {
+    try {
+      const { insertUserProfileSchema } = await import("@shared/schema");
+      const validatedData = insertUserProfileSchema.partial().parse(req.body);
+      const profile = await storage.updateUserProfile(parseInt(req.params.id), validatedData);
+      if (!profile) {
+        return res.status(404).json({ error: "User profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(400).json({ error: error instanceof Error ? error.message : "Failed to update user profile" });
+    }
+  });
+
+  app.delete('/api/user-profiles/:id', async (req, res) => {
+    try {
+      const success = await storage.deleteUserProfile(parseInt(req.params.id));
+      res.json({ success });
+    } catch (error) {
+      console.error("Error deleting user profile:", error);
+      res.status(500).json({ error: "Failed to delete user profile" });
+    }
+  });
+
+  // Enhanced User Routes with Role Support
+  app.get('/api/users-with-roles', async (req, res) => {
+    try {
+      const users = await storage.getUsersWithRoles();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users with roles:", error);
+      res.status(500).json({ error: "Failed to fetch users with roles" });
+    }
+  });
+
+  app.get('/api/users-with-roles/:id', async (req, res) => {
+    try {
+      const user = await storage.getUserWithRole(parseInt(req.params.id));
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user with role:", error);
+      res.status(500).json({ error: "Failed to fetch user with role" });
+    }
+  });
+
+  app.patch('/api/users/:id/role', async (req, res) => {
+    try {
+      const { roleId } = req.body;
+      if (!roleId) {
+        return res.status(400).json({ error: "Role ID is required" });
+      }
+      const user = await storage.updateUserRole(parseInt(req.params.id), roleId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ error: "Failed to update user role" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

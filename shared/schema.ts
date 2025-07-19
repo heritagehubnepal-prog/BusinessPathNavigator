@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -22,6 +22,19 @@ export const locations = pgTable("locations", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Role-Based Access Control System
+export const roles = pgTable("roles", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  displayName: varchar("display_name", { length: 100 }).notNull(),
+  description: text("description"),
+  permissions: text("permissions").array(), // Array of permission strings
+  moduleAccess: text("module_access").array(), // Array of accessible modules
+  isActive: boolean("is_active").default(true),
+  isSystemRole: boolean("is_system_role").default(false), // Cannot be deleted
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -29,10 +42,37 @@ export const users = pgTable("users", {
   email: text("email"),
   firstName: text("first_name"),
   lastName: text("last_name"),
-  role: varchar("role", { length: 20 }).notNull().default("worker"), // admin, manager, production, finance, sales, worker
+  roleId: integer("role_id").references(() => roles.id), // Foreign key to roles table
   locationId: integer("location_id").references(() => locations.id), // User's primary location
   isActive: boolean("is_active").default(true),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userProfiles = pgTable("user_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  employeeId: integer("employee_id").references(() => employees.id), // Link to employee record if applicable
+  department: varchar("department", { length: 50 }),
+  position: varchar("position", { length: 100 }),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  emergencyContact: varchar("emergency_contact", { length: 100 }),
+  emergencyPhone: varchar("emergency_phone", { length: 20 }),
+  dateOfBirth: timestamp("date_of_birth"),
+  address: text("address"),
+  hireDate: timestamp("hire_date"),
+  salary: decimal("salary", { precision: 10, scale: 2 }),
+  bio: text("bio"),
+  skills: text("skills").array(),
+  certifications: text("certifications").array(),
+  profileImageUrl: varchar("profile_image_url", { length: 255 }),
+  preferredLanguage: varchar("preferred_language", { length: 10 }).default("en"),
+  timezone: varchar("timezone", { length: 50 }).default("Asia/Kathmandu"),
+  notificationPreferences: text("notification_preferences"), // JSON string
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const productionBatches = pgTable("production_batches", {
@@ -233,6 +273,19 @@ export const insertLocationSchema = createInsertSchema(locations).omit({
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+  lastLoginAt: true,
+});
+
+export const insertRoleSchema = createInsertSchema(roles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers).omit({
@@ -303,8 +356,12 @@ export const insertPayrollSchema = createInsertSchema(payroll).omit({
 // Types
 export type Location = typeof locations.$inferSelect;
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type ProductionBatch = typeof productionBatches.$inferSelect;
 export type InsertProductionBatch = z.infer<typeof insertProductionBatchSchema>;
 export type Inventory = typeof inventory.$inferSelect;
