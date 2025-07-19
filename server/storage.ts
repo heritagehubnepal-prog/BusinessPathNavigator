@@ -65,8 +65,16 @@ export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByVerificationToken(token: string): Promise<User | undefined>;
+  getUserByPasswordResetToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserLastLogin(id: number): Promise<void>;
+  verifyUserEmail(id: number): Promise<void>;
+  updateVerificationToken(id: number, token: string, expires: Date): Promise<void>;
+  setPasswordResetToken(id: number, token: string, expires: Date): Promise<void>;
+  updateUserPassword(id: number, hashedPassword: string): Promise<void>;
   
   // Production Batches
   getProductionBatches(): Promise<ProductionBatch[]>;
@@ -1352,6 +1360,65 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: number, updateUser: Partial<InsertUser>): Promise<User | undefined> {
     const [user] = await db.update(users).set(updateUser).where(eq(users.id, id)).returning();
     return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.emailVerificationToken, token));
+    return user;
+  }
+
+  async getUserByPasswordResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.passwordResetToken, token));
+    return user;
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    await db.update(users)
+      .set({ lastLoginAt: new Date() })
+      .where(eq(users.id, id));
+  }
+
+  async verifyUserEmail(id: number): Promise<void> {
+    await db.update(users)
+      .set({ 
+        isEmailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null 
+      })
+      .where(eq(users.id, id));
+  }
+
+  async updateVerificationToken(id: number, token: string, expires: Date): Promise<void> {
+    await db.update(users)
+      .set({ 
+        emailVerificationToken: token,
+        emailVerificationExpires: expires 
+      })
+      .where(eq(users.id, id));
+  }
+
+  async setPasswordResetToken(id: number, token: string, expires: Date): Promise<void> {
+    await db.update(users)
+      .set({ 
+        passwordResetToken: token,
+        passwordResetExpires: expires 
+      })
+      .where(eq(users.id, id));
+  }
+
+  async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
+    await db.update(users)
+      .set({ 
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null 
+      })
+      .where(eq(users.id, id));
   }
 
   // Production Batches

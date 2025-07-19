@@ -39,11 +39,16 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  email: text("email"),
+  email: text("email").unique(),
   firstName: text("first_name"),
   lastName: text("last_name"),
   roleId: integer("role_id").references(() => roles.id), // Foreign key to roles table
   locationId: integer("location_id").references(() => locations.id), // User's primary location
+  isEmailVerified: boolean("is_email_verified").default(false),
+  emailVerificationToken: varchar("email_verification_token", { length: 255 }),
+  emailVerificationExpires: timestamp("email_verification_expires"),
+  passwordResetToken: varchar("password_reset_token", { length: 255 }),
+  passwordResetExpires: timestamp("password_reset_expires"),
   isActive: boolean("is_active").default(true),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),

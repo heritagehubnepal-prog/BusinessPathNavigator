@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { authService } from "./authService";
 import {
   insertLocationSchema,
   insertProductionBatchSchema,
@@ -19,6 +20,127 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication Routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const registerSchema = z.object({
+        username: z.string().min(3),
+        email: z.string().email(),
+        password: z.string().min(6),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+        roleId: z.number().optional(),
+      });
+
+      const validatedData = registerSchema.parse(req.body);
+      const result = await authService.createUser(validatedData);
+      
+      if (result.success) {
+        res.status(201).json({ message: result.message, user: result.user });
+      } else {
+        res.status(400).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(400).json({ message: "Invalid registration data" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const loginSchema = z.object({
+        email: z.string().email(),
+        password: z.string().min(1),
+      });
+
+      const validatedData = loginSchema.parse(req.body);
+      const result = await authService.loginUser(validatedData);
+      
+      if (result.success) {
+        // In a real app, you'd set session/JWT here
+        res.json({ message: result.message, user: result.user });
+      } else {
+        res.status(401).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(400).json({ message: "Invalid login data" });
+    }
+  });
+
+  app.post("/api/auth/verify-email", async (req, res) => {
+    try {
+      const verifySchema = z.object({
+        token: z.string().optional(),
+        code: z.string().optional(),
+      });
+
+      const validatedData = verifySchema.parse(req.body);
+      const result = await authService.verifyEmail(validatedData);
+      
+      if (result.success) {
+        res.json({ message: result.message });
+      } else {
+        res.status(400).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error("Email verification error:", error);
+      res.status(400).json({ message: "Invalid verification data" });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const forgotSchema = z.object({
+        email: z.string().email(),
+      });
+
+      const validatedData = forgotSchema.parse(req.body);
+      const result = await authService.requestPasswordReset(validatedData.email);
+      
+      res.json({ message: result.message });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(400).json({ message: "Invalid email address" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const resetSchema = z.object({
+        token: z.string(),
+        newPassword: z.string().min(6),
+      });
+
+      const validatedData = resetSchema.parse(req.body);
+      const result = await authService.resetPassword(validatedData);
+      
+      if (result.success) {
+        res.json({ message: result.message });
+      } else {
+        res.status(400).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(400).json({ message: "Invalid reset data" });
+    }
+  });
+
+  app.post("/api/auth/resend-verification", async (req, res) => {
+    try {
+      const resendSchema = z.object({
+        email: z.string().email(),
+      });
+
+      const validatedData = resendSchema.parse(req.body);
+      const result = await authService.resendVerificationEmail(validatedData.email);
+      
+      res.json({ message: result.message });
+    } catch (error) {
+      console.error("Resend verification error:", error);
+      res.status(400).json({ message: "Invalid email address" });
+    }
+  });
   // Locations
   app.get("/api/locations", async (req, res) => {
     try {

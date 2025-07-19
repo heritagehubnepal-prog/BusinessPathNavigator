@@ -15,6 +15,7 @@ import Sales from "@/pages/sales";
 import Locations from "@/pages/locations";
 import HRPage from "@/pages/hr";
 import RolesManagement from "@/pages/roles";
+import AuthPage from "@/pages/auth";
 import Sidebar from "@/components/layout/sidebar";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
           <Route path="/locations" component={Locations} />
           <Route path="/hr" component={HRPage} />
           <Route path="/roles" component={RolesManagement} />
+          <Route path="/auth" component={AuthPage} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/reports" component={Reports} />
           <Route component={NotFound} />
