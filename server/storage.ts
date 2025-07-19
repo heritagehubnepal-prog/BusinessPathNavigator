@@ -1272,8 +1272,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Use MemStorage for development
-export const storage = new MemStorage();
+// Use DatabaseStorage for persistent storage
 
 export class DatabaseStorage implements IStorage {
   // Locations
@@ -1630,4 +1629,96 @@ export class DatabaseStorage implements IStorage {
     await db.delete(orderItems).where(eq(orderItems.id, id));
     return true;
   }
+
+  // Human Resource Management
+  // Employees
+  async getEmployees(): Promise<Employee[]> {
+    return await db.select().from(employees).orderBy(desc(employees.createdAt));
+  }
+
+  async getEmployee(id: number): Promise<Employee | undefined> {
+    const [employee] = await db.select().from(employees).where(eq(employees.id, id));
+    return employee;
+  }
+
+  async createEmployee(insertEmployee: InsertEmployee): Promise<Employee> {
+    const [employee] = await db.insert(employees).values(insertEmployee).returning();
+    return employee;
+  }
+
+  async updateEmployee(id: number, updateEmployee: Partial<InsertEmployee>): Promise<Employee | undefined> {
+    const [employee] = await db.update(employees).set(updateEmployee).where(eq(employees.id, id)).returning();
+    return employee;
+  }
+
+  async deleteEmployee(id: number): Promise<boolean> {
+    await db.delete(employees).where(eq(employees.id, id));
+    return true;
+  }
+
+  // Attendance
+  async getAttendance(): Promise<Attendance[]> {
+    return await db.select().from(attendance).orderBy(desc(attendance.date));
+  }
+
+  async getAttendanceByEmployee(employeeId: number): Promise<Attendance[]> {
+    return await db.select().from(attendance)
+      .where(eq(attendance.employeeId, employeeId))
+      .orderBy(desc(attendance.date));
+  }
+
+  async getAttendanceByDate(date: Date): Promise<Attendance[]> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    return await db.select().from(attendance)
+      .where(
+        sql`${attendance.date} >= ${startOfDay} AND ${attendance.date} <= ${endOfDay}`
+      );
+  }
+
+  async createAttendance(insertAttendance: InsertAttendance): Promise<Attendance> {
+    const [attendanceRecord] = await db.insert(attendance).values(insertAttendance).returning();
+    return attendanceRecord;
+  }
+
+  async updateAttendance(id: number, updateAttendance: Partial<InsertAttendance>): Promise<Attendance | undefined> {
+    const [attendanceRecord] = await db.update(attendance).set(updateAttendance).where(eq(attendance.id, id)).returning();
+    return attendanceRecord;
+  }
+
+  async deleteAttendance(id: number): Promise<boolean> {
+    await db.delete(attendance).where(eq(attendance.id, id));
+    return true;
+  }
+
+  // Payroll
+  async getPayroll(): Promise<Payroll[]> {
+    return await db.select().from(payroll).orderBy(desc(payroll.createdAt));
+  }
+
+  async getPayrollByEmployee(employeeId: number): Promise<Payroll[]> {
+    return await db.select().from(payroll)
+      .where(eq(payroll.employeeId, employeeId))
+      .orderBy(desc(payroll.createdAt));
+  }
+
+  async createPayroll(insertPayroll: InsertPayroll): Promise<Payroll> {
+    const [payrollRecord] = await db.insert(payroll).values(insertPayroll).returning();
+    return payrollRecord;
+  }
+
+  async updatePayroll(id: number, updatePayroll: Partial<InsertPayroll>): Promise<Payroll | undefined> {
+    const [payrollRecord] = await db.update(payroll).set(updatePayroll).where(eq(payroll.id, id)).returning();
+    return payrollRecord;
+  }
+
+  async deletePayroll(id: number): Promise<boolean> {
+    await db.delete(payroll).where(eq(payroll.id, id));
+    return true;
+  }
 }
+
+export const storage = new DatabaseStorage();
