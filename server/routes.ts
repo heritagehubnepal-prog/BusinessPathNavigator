@@ -144,20 +144,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Logout route
   app.post("/api/logout", (req, res) => {
-    req.logout((err) => {
+    req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ message: "Logout failed" });
       }
+      res.clearCookie('connect.sid');
       res.json({ message: "Logged out successfully" });
     });
   });
 
   // Get logout route (for direct navigation)
   app.get("/api/logout", (req, res) => {
-    req.logout((err) => {
+    req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ message: "Logout failed" });
       }
+      res.clearCookie('connect.sid');
       res.redirect("/auth");
     });
   });
