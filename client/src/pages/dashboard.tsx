@@ -6,6 +6,7 @@ import RecentActivities from "@/components/dashboard/recent-activities";
 import ActiveBatches from "@/components/dashboard/active-batches";
 import MilestoneTracker from "@/components/dashboard/milestone-tracker";
 import QuickActions from "@/components/dashboard/quick-actions";
+import AttendanceWidget from "@/components/attendance-widget";
 import type { DashboardAnalytics } from "@/lib/types";
 
 export default function Dashboard() {
@@ -56,7 +57,7 @@ export default function Dashboard() {
         </div>
 
         {/* Secondary Widgets */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="glass-card card-hover p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-200/30 to-emerald-200/30 rounded-full -translate-y-10 translate-x-10"></div>
             <ActiveBatches />
@@ -64,6 +65,9 @@ export default function Dashboard() {
           <div className="glass-card card-hover p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-200/30 to-orange-200/30 rounded-full -translate-y-10 translate-x-10"></div>
             <MilestoneTracker />
+          </div>
+          <div className="relative">
+            <AttendanceWidget />
           </div>
         </div>
 

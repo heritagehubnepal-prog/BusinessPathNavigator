@@ -158,6 +158,8 @@ export interface IStorage {
   createAttendance(attendance: InsertAttendance): Promise<Attendance>;
   updateAttendance(id: number, attendance: Partial<InsertAttendance>): Promise<Attendance | undefined>;
   deleteAttendance(id: number): Promise<boolean>;
+  getTodayAttendance(userId: number, date: Date): Promise<Attendance | undefined>;
+  getEmployeeByUserId(userId: number): Promise<Employee | undefined>;
 
   getPayroll(): Promise<Payroll[]>;
   getPayrollByEmployee(employeeId: number): Promise<Payroll[]>;
@@ -2055,6 +2057,37 @@ export class DatabaseStorage implements IStorage {
   async deletePayroll(id: number): Promise<boolean> {
     await db.delete(payroll).where(eq(payroll.id, id));
     return true;
+  }
+
+  // Additional Attendance Methods for Login/Logout System
+  async getTodayAttendance(userId: number, date: Date): Promise<Attendance | undefined> {
+    // First get the employee record for this user
+    const employee = await this.getEmployeeByUserId(userId);
+    if (!employee) return undefined;
+
+    // Get attendance record for today
+    const [attendanceRecord] = await db.select()
+      .from(attendance)
+      .where(and(
+        eq(attendance.employeeId, employee.id),
+        gte(attendance.date, date),
+        lte(attendance.date, new Date(date.getTime() + 24 * 60 * 60 * 1000))
+      ));
+    
+    return attendanceRecord;
+  }
+
+  async getEmployeeByUserId(userId: number): Promise<Employee | undefined> {
+    // Get user first to get their email
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+
+    // Find employee by email (assuming employee email matches user email)
+    const [employee] = await db.select()
+      .from(employees)
+      .where(eq(employees.email, user.email));
+    
+    return employee;
   }
 
   // Role Management

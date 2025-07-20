@@ -20,6 +20,7 @@ import UsersPage from "@/pages/users";
 import UserManagementPage from "@/pages/user-management";
 import AuthPage from "@/pages/auth";
 import UserApproval from "@/pages/user-approval";
+import AttendancePage from "@/pages/attendance";
 import DynamicSidebar from "@/components/layout/dynamic-sidebar";
 
 function Router() {
@@ -65,6 +66,7 @@ function Router() {
           <Route path="/users" component={UserManagementPage} />
           <Route path="/user-management" component={UserManagementPage} />
           <Route path="/user-approval" component={UserApproval} />
+          <Route path="/attendance" component={AttendancePage} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/reports" component={Reports} />

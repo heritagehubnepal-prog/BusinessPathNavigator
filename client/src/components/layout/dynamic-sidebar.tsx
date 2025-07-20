@@ -72,6 +72,12 @@ const menuStructure: MenuItem[] = [
     icon: Users 
   },
   { 
+    id: "attendance", 
+    name: "Attendance", 
+    href: "/attendance", 
+    icon: ClipboardCheck 
+  },
+  { 
     id: "administration", 
     name: "Administration", 
     icon: Settings,

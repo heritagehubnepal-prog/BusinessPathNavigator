@@ -680,6 +680,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Attendance Management routes
+  
+  // Get today's attendance for current user
+  app.get("/api/attendance/today", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.user.id;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const attendance = await storage.getTodayAttendance(userId, today);
+      res.json(attendance || { status: "not_started" });
+    } catch (error) {
+      console.error("Error fetching today's attendance:", error);
+      res.status(500).json({ message: "Failed to fetch attendance" });
+    }
+  });
+
+  // Check in
+  app.post("/api/attendance/check-in", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.user.id;
+      const now = new Date();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Check if already checked in today
+      const existingAttendance = await storage.getTodayAttendance(userId, today);
+      if (existingAttendance?.checkIn) {
+        return res.status(400).json({ message: "Already checked in today" });
+      }
+
+      // Get employee record
+      const employee = await storage.getEmployeeByUserId(userId);
+      if (!employee) {
+        return res.status(404).json({ message: "Employee record not found" });
+      }
+
+      const attendanceData = {
+        employeeId: employee.id,
+        date: today,
+        checkIn: now,
+        status: "present"
+      };
+
+      const attendance = existingAttendance 
+        ? await storage.updateAttendance(existingAttendance.id, attendanceData)
+        : await storage.createAttendance(attendanceData);
+
+      // Log activity
+      await storage.createActivity({
+        type: "attendance_check_in",
+        description: `${employee.name} checked in at ${now.toLocaleTimeString()}`,
+        entityId: attendance.id,
+        entityType: "attendance"
+      });
+
+      res.json(attendance);
+    } catch (error) {
+      console.error("Error checking in:", error);
+      res.status(500).json({ message: "Failed to check in" });
+    }
+  });
+
+  // Check out
+  app.post("/api/attendance/check-out", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.user.id;
+      const now = new Date();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Get today's attendance
+      const attendance = await storage.getTodayAttendance(userId, today);
+      if (!attendance || !attendance.checkIn) {
+        return res.status(400).json({ message: "Must check in first before checking out" });
+      }
+
+      if (attendance.checkOut) {
+        return res.status(400).json({ message: "Already checked out today" });
+      }
+
+      // Calculate hours worked
+      const checkInTime = new Date(attendance.checkIn);
+      const hoursWorked = (now.getTime() - checkInTime.getTime()) / (1000 * 60 * 60);
+
+      const updatedAttendance = await storage.updateAttendance(attendance.id, {
+        checkOut: now,
+        hoursWorked: parseFloat(hoursWorked.toFixed(2))
+      });
+
+      // Get employee for activity log
+      const employee = await storage.getEmployeeByUserId(userId);
+      if (employee) {
+        await storage.createActivity({
+          type: "attendance_check_out",
+          description: `${employee.name} checked out at ${now.toLocaleTimeString()} (${hoursWorked.toFixed(2)} hours)`,
+          entityId: attendance.id,
+          entityType: "attendance"
+        });
+      }
+
+      res.json({ ...updatedAttendance, hoursWorked });
+    } catch (error) {
+      console.error("Error checking out:", error);
+      res.status(500).json({ message: "Failed to check out" });
+    }
+  });
+
   // Analytics endpoints
   app.get("/api/analytics/dashboard", async (req, res) => {
     try {
