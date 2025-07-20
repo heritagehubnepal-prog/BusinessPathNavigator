@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import bcrypt from "bcrypt";
+import rateLimit from "express-rate-limit";
+import slowDown from "express-slow-down";
 import { storage } from "./storage";
 import { authService } from "./authService";
 import {
@@ -29,6 +31,35 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Rate limiting for authentication endpoints
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 requests per windowMs
+    message: { message: "Too many login attempts, please try again later" },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  const registerLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 3, // Limit each IP to 3 registration attempts per hour
+    message: { message: "Too many registration attempts, please try again later" },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // General API rate limiting
+  const apiLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 100, // Limit each IP to 100 requests per minute
+    message: { message: "Too many requests, please slow down" },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Apply rate limiting to all API routes
+  app.use('/api', apiLimiter);
+
   // Environment status endpoint
   app.get('/environment-status', (req, res) => {
     res.sendFile('environment-status.html', { root: process.cwd() });
@@ -82,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Authentication Routes
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", registerLimiter, async (req, res) => {
     try {
       const registerSchema = z.object({
         employeeId: z.string().min(3),
@@ -106,11 +137,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Registration error:", error);
-      res.status(400).json({ message: "Invalid registration data" });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Registration failed. Please try again." });
+      }
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", authLimiter, async (req, res) => {
     try {
       const loginSchema = z.object({
         emailOrEmployeeId: z.string().min(1),
@@ -150,7 +185,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Login error:", error);
-      res.status(400).json({ message: "Invalid login data" });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid login format" });
+      } else {
+        res.status(500).json({ message: "Login failed. Please try again." });
+      }
     }
   });
 
