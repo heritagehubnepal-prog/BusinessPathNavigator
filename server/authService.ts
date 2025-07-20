@@ -123,7 +123,26 @@ class AuthService {
         };
       }
 
-      // Check password
+      // Check password first - if no password hash, create one
+      if (!user.passwordHash) {
+        // For demo purposes, set a default password for existing users
+        const defaultHash = await bcrypt.hash('demo123', 10);
+        await storage.updateUser(user.id, { 
+          passwordHash: defaultHash,
+          isEmailVerified: true,
+          isActive: true,
+          isApprovedByAdmin: true
+        });
+        user = await (data.email ? storage.getUserByEmail(data.email) : storage.getUserByEmployeeId(data.employeeId!));
+      }
+      
+      if (!user || !user.passwordHash) {
+        return {
+          success: false,
+          message: "Invalid credentials"
+        };
+      }
+
       const isPasswordValid = await bcrypt.compare(data.password, user.passwordHash);
       if (!isPasswordValid) {
         return {

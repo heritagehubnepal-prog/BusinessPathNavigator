@@ -710,7 +710,7 @@ export class MemStorage implements IStorage {
       {
         employeeId: "TEST-001",
         email: "test@mycopath.com.np",
-        passwordHash: "$2b$10$PC/TUYTEtu3Xnefl6adGxOiHFqq/bDLF3OLww.2KklX0cBjWcPAtC", // password: test123
+        passwordHash: "$2b$10$4yOgWCBBEEC5F9ru/YMfXuma9sOBYMa7bIB3uf1qnuaR.mWPYM0kK", // password: demo123
         firstName: "Test",
         lastName: "User",
         isEmailVerified: true,
@@ -725,7 +725,7 @@ export class MemStorage implements IStorage {
       {
         employeeId: "EMP-001", 
         email: "akash@mycopath.com.np",
-        passwordHash: "$2b$10$PC/TUYTEtu3Xnefl6adGxOiHFqq/bDLF3OLww.2KklX0cBjWcPAtC", // password: test123
+        passwordHash: "$2b$10$4yOgWCBBEEC5F9ru/YMfXuma9sOBYMa7bIB3uf1qnuaR.mWPYM0kK", // password: demo123
         firstName: "Akash",
         lastName: "Rai",
         isEmailVerified: true,
@@ -740,7 +740,37 @@ export class MemStorage implements IStorage {
     ];
 
     testUsers.forEach(user => {
-      this.createUser(user);
+      // Check if user already exists to avoid duplicates
+      const existing = Array.from(this.users.values()).find(u => u.employeeId === user.employeeId);
+      if (!existing) {
+        console.log(`Creating test user: ${user.employeeId}`);
+        this.createUser(user);
+      } else {
+        console.log(`Test user ${user.employeeId} already exists`);
+      }
+    });
+    
+    // Update multiple users with proper passwords for testing dual authentication
+    // Remove password setup from storage initialization - will be handled at login
+    
+    const testUserConfigs = [
+      { employeeId: "demo_user", email: "demo@mycopath.com.np" },
+      { employeeId: "production_manager", email: "production@mycopath.com.np" },
+      { employeeId: "sales_rep", email: "sales@mycopath.com.np" }
+    ];
+    
+    testUserConfigs.forEach(config => {
+      const user = Array.from(this.users.values()).find(u => u.employeeId === config.employeeId);
+      if (user) {
+        const updatedUser = {
+          ...user,
+          isEmailVerified: true,
+          isActive: true,
+          isApprovedByAdmin: true
+        };
+        this.users.set(user.id, updatedUser);
+        console.log(`Updated ${config.employeeId} with verification and approval status`);
+      }
     });
 
     // Initialize roles if they don't exist
