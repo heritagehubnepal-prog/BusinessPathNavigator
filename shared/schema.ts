@@ -86,27 +86,76 @@ export const userProfiles = pgTable("user_profiles", {
 
 export const productionBatches = pgTable("production_batches", {
   id: serial("id").primaryKey(),
-  batchNumber: varchar("batch_number", { length: 50 }).notNull().unique(),
-  productType: varchar("product_type", { length: 100 }).notNull(),
-  substrate: varchar("substrate", { length: 100 }).notNull(),
-  locationId: integer("location_id").references(() => locations.id), // Production location
+  batchNumber: varchar("batch_number", { length: 50 }).notNull().unique(), // M-001, M-002
+  productType: varchar("product_type", { length: 100 }).notNull(), // Pink Oyster, Grey Oyster
+  substrateType: varchar("substrate_type", { length: 100 }).notNull(), // Rice Straw, Sawdust
+  spawnType: varchar("spawn_type", { length: 100 }), // Local, Imported
   startDate: timestamp("start_date").notNull(),
   expectedHarvestDate: timestamp("expected_harvest_date"),
-  actualHarvestDate: timestamp("actual_harvest_date"),
-  status: varchar("status", { length: 50 }).notNull(), // inoculation, growing, ready, harvested, contaminated
-  initialWeight: decimal("initial_weight", { precision: 10, scale: 2 }),
-  harvestedWeight: decimal("harvested_weight", { precision: 10, scale: 2 }),
-  contaminationRate: decimal("contamination_rate", { precision: 5, scale: 2 }),
-  notes: text("notes"),
+  
+  // Stage 2: Inoculation
+  inoculationDate: timestamp("inoculation_date"),
+  spawnAddedBy: varchar("spawn_added_by", { length: 50 }),
+  spawnQuantityGrams: decimal("spawn_quantity_grams", { precision: 10, scale: 2 }),
+  spawnSupplier: varchar("spawn_supplier", { length: 100 }),
+  inoculationNotes: text("inoculation_notes"),
+  
+  // Stage 3: Incubation
+  incubationStartDate: timestamp("incubation_start_date"),
+  incubationRoomTemp: decimal("incubation_room_temp", { precision: 5, scale: 2 }),
+  incubationRoomHumidity: decimal("incubation_room_humidity", { precision: 5, scale: 2 }),
+  incubationNotes: text("incubation_notes"),
+  
+  // Stage 4: Fruiting
+  fruitingStartDate: timestamp("fruiting_start_date"),
+  fruitingRoomTemp: decimal("fruiting_room_temp", { precision: 5, scale: 2 }),
+  fruitingRoomHumidity: decimal("fruiting_room_humidity", { precision: 5, scale: 2 }),
+  lightExposure: varchar("light_exposure", { length: 100 }), // "LED 12 hours/day"
+  fruitingNotes: text("fruiting_notes"),
+  
+  // Stage 5: Harvesting
+  harvestDate: timestamp("harvest_date"),
+  harvestedWeightKg: decimal("harvested_weight_kg", { precision: 10, scale: 3 }),
+  damagedWeightKg: decimal("damaged_weight_kg", { precision: 10, scale: 3 }),
+  harvestedBy: varchar("harvested_by", { length: 50 }),
+  harvestNotes: text("harvest_notes"),
+  
+  // Stage 6: Post-Harvest
+  postHarvestDate: timestamp("post_harvest_date"),
+  substrateCollectedKg: decimal("substrate_collected_kg", { precision: 10, scale: 3 }),
+  substrateCondition: varchar("substrate_condition", { length: 50 }), // dry, wet, contaminated
+  myceliumReuseStatus: boolean("mycelium_reuse_status").default(false),
+  postHarvestNotes: text("post_harvest_notes"),
+  
+  // Current Stage Tracking
+  currentStage: varchar("current_stage", { length: 50 }).notNull().default("batch_creation"), // batch_creation, inoculation, incubation, fruiting, harvesting, post_harvest, completed
+  
   // Management Control Fields
-  createdBy: varchar("created_by", { length: 50 }), // Employee who created this batch
-  lastModifiedBy: varchar("last_modified_by", { length: 50 }), // Employee who last modified
-  requiresApproval: boolean("requires_approval").default(false), // Flagged for management review
-  isApproved: boolean("is_approved").default(false), // Approved by management
-  approvedBy: varchar("approved_by", { length: 50 }), // Manager who approved
+  createdBy: varchar("created_by", { length: 50 }),
+  lastModifiedBy: varchar("last_modified_by", { length: 50 }),
+  requiresApproval: boolean("requires_approval").default(false),
+  isApproved: boolean("is_approved").default(false),
+  approvedBy: varchar("approved_by", { length: 50 }),
   approvedAt: timestamp("approved_at"),
   riskLevel: varchar("risk_level", { length: 20 }).default("low"), // low, medium, high
-  qualityCheckStatus: varchar("quality_check_status", { length: 20 }).default("pending"), // pending, passed, failed
+  qualityCheckStatus: varchar("quality_check_status", { length: 20 }).default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Contamination tracking table
+export const contaminationLogs = pgTable("contamination_logs", {
+  id: serial("id").primaryKey(),
+  batchId: integer("batch_id").references(() => productionBatches.id).notNull(),
+  contaminationReportedDate: timestamp("contamination_reported_date").notNull(),
+  contaminationType: varchar("contamination_type", { length: 100 }).notNull(), // Green Mold, Yellow Mold, Trichoderma, Bacteria
+  contaminatedBagsCount: integer("contaminated_bags_count").notNull(),
+  contaminationSeverity: varchar("contamination_severity", { length: 20 }).notNull(), // Low, Medium, High
+  correctiveActionTaken: text("corrective_action_taken"),
+  photoUrl: varchar("photo_url", { length: 255 }), // Optional photo upload
+  workerNotes: text("worker_notes"),
+  reportedBy: varchar("reported_by", { length: 50 }),
+  verifiedBy: varchar("verified_by", { length: 50 }), // Manager verification
+  isVerified: boolean("is_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -330,45 +379,22 @@ export const insertProductionBatchSchema = createInsertSchema(productionBatches)
   id: true,
   createdAt: true,
 }).extend({
-  batchNumber: z.string().min(1, "Please enter a batch number (e.g., BATCH-001)"),
-  productType: z.string().min(1, "Please select a product type from the dropdown"), 
-  substrate: z.string().min(1, "Please select a substrate type from the dropdown"),
+  batchNumber: z.string().min(1, "Please enter a batch number (e.g., M-001)"),
+  productType: z.string().min(1, "Please select a mushroom type (Pink Oyster, Grey Oyster, etc.)"), 
+  substrateType: z.string().min(1, "Please select substrate type (Rice Straw, Sawdust, etc.)"),
   startDate: z.union([
     z.string().transform(str => new Date(str)),
     z.date()
   ]).refine(date => !isNaN(date.getTime()), {
     message: "Please enter a valid start date"
   }),
-  status: z.string().min(1, "Status is required").default("inoculation"),
   expectedHarvestDate: z.union([
     z.string().transform(str => str ? new Date(str) : null),
     z.date(),
     z.null()
   ]).optional().nullable(),
-  actualHarvestDate: z.union([
-    z.string().transform(str => str ? new Date(str) : null),
-    z.date(),
-    z.null()
-  ]).optional().nullable(),
-  initialWeight: z.union([
-    z.string().transform(val => val === "" ? null : parseFloat(val)),
-    z.number(),
-    z.null()
-  ]).refine(val => val === null || val === undefined || val >= 0, {
-    message: "Initial weight must be a positive number or left empty"
-  }).optional().nullable(),
-  harvestedWeight: z.union([
-    z.string().transform(val => val === "" ? null : parseFloat(val)),
-    z.number(),
-    z.null()
-  ]).optional().nullable(),
-  contaminationRate: z.union([
-    z.string().transform(val => val === "" ? null : parseFloat(val)),
-    z.number(),
-    z.null()
-  ]).optional().nullable(),
-  locationId: z.number().optional().nullable(),
-  notes: z.string().optional().nullable(),
+  currentStage: z.string().default("batch_creation"),
+  // Stage-specific fields are optional and handled dynamically
 });
 
 export const insertInventorySchema = createInsertSchema(inventory).omit({
@@ -422,6 +448,14 @@ export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type ProductionBatch = typeof productionBatches.$inferSelect;
 export type InsertProductionBatch = z.infer<typeof insertProductionBatchSchema>;
+export type ContaminationLog = typeof contaminationLogs.$inferSelect;
+export type InsertContaminationLog = typeof contaminationLogs.$inferInsert;
+
+export const insertContaminationLogSchema = createInsertSchema(contaminationLogs).omit({
+  id: true,
+  createdAt: true,
+  isVerified: true,
+});
 export type Inventory = typeof inventory.$inferSelect;
 export type InsertInventory = z.infer<typeof insertInventorySchema>;
 export type FinancialTransaction = typeof financialTransactions.$inferSelect;

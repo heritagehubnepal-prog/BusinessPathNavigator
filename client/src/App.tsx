@@ -22,6 +22,7 @@ import AuthPage from "@/pages/auth";
 import UserApproval from "@/pages/user-approval";
 import AttendancePage from "@/pages/attendance";
 import BatchApprovals from "@/pages/batch-approvals";
+import ProductionWorkflow from "@/pages/production-workflow";
 import DynamicSidebar from "@/components/layout/dynamic-sidebar";
 
 function Router() {
@@ -57,6 +58,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/production" component={Production} />
+          <Route path="/production-workflow" component={ProductionWorkflow} />
           <Route path="/batch-approvals" component={BatchApprovals} />
           <Route path="/inventory" component={Inventory} />
           <Route path="/financial" component={Financial} />

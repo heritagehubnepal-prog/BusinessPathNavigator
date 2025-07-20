@@ -544,6 +544,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Contamination Logs
+  app.get("/api/contamination-logs", isAuthenticated, async (req, res) => {
+    try {
+      const logs = await storage.getContaminationLogs();
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch contamination logs" });
+    }
+  });
+
+  app.post("/api/contamination-logs", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertContaminationLogSchema.parse(req.body);
+      const log = await storage.createContaminationLog(validatedData);
+      res.status(201).json(log);
+    } catch (error) {
+      console.error("Contamination log creation error:", error);
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const zodError = error as any;
+        const issues = zodError.issues || [];
+        
+        if (issues.length > 0) {
+          const firstError = issues[0];
+          let userMessage = "";
+          
+          switch (firstError.path[0]) {
+            case "contaminationType":
+              userMessage = "Please select a contamination type";
+              break;
+            case "contaminatedBagsCount":
+              userMessage = "Please enter number of contaminated bags";
+              break;
+            case "contaminationSeverity":
+              userMessage = "Please select contamination severity level";
+              break;
+            case "correctiveActionTaken":
+              userMessage = "Please describe corrective action taken";
+              break;
+            default:
+              userMessage = firstError.message;
+          }
+          
+          res.status(400).json({ 
+            message: userMessage,
+            field: firstError.path[0]
+          });
+        } else {
+          res.status(400).json({ message: "Please check all required fields and try again" });
+        }
+      } else {
+        res.status(500).json({ message: "Unable to report contamination. Please try again." });
+      }
+    }
+  });
+
   // Production Batches
   app.get("/api/production-batches", async (req, res) => {
     try {

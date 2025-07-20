@@ -50,6 +50,8 @@ import {
   type InsertAttendance,
   type Payroll,
   type InsertPayroll,
+  type ContaminationLog,
+  type InsertContaminationLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
@@ -78,12 +80,16 @@ export interface IStorage {
   setPasswordResetToken(id: number, token: string, expires: Date): Promise<void>;
   updateUserPassword(id: number, hashedPassword: string): Promise<void>;
   
-  // Production Batches
+  // Production Batches  
   getProductionBatches(): Promise<ProductionBatch[]>;
   getProductionBatch(id: number): Promise<ProductionBatch | undefined>;
   createProductionBatch(batch: InsertProductionBatch): Promise<ProductionBatch>;
   updateProductionBatch(id: number, batch: Partial<InsertProductionBatch>): Promise<ProductionBatch | undefined>;
   deleteProductionBatch(id: number): Promise<boolean>;
+
+  // Contamination Logs
+  getContaminationLogs(): Promise<ContaminationLog[]>;
+  createContaminationLog(log: InsertContaminationLog): Promise<ContaminationLog>;
   
   // Inventory
   getInventoryItems(): Promise<Inventory[]>;
@@ -207,6 +213,7 @@ export class MemStorage implements IStorage {
   private employees: Map<number, Employee>;
   private attendance: Map<number, Attendance>;
   private payroll: Map<number, Payroll>;
+  private contaminationLogs: Map<number, ContaminationLog>;
   private currentId: number;
   private roleIdCounter: number;
 
@@ -228,6 +235,7 @@ export class MemStorage implements IStorage {
     this.employees = new Map();
     this.attendance = new Map();
     this.payroll = new Map();
+    this.contaminationLogs = new Map();
     this.currentId = 1;
     this.roleIdCounter = 1;
     
@@ -1080,6 +1088,35 @@ export class MemStorage implements IStorage {
 
   async deleteProductionBatch(id: number): Promise<boolean> {
     return this.productionBatches.delete(id);
+  }
+
+  // Contamination Logs
+  async getContaminationLogs(): Promise<ContaminationLog[]> {
+    return Array.from(this.contaminationLogs.values()).sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }
+
+  async createContaminationLog(insertLog: InsertContaminationLog): Promise<ContaminationLog> {
+    const id = this.currentId++;
+    const log: ContaminationLog = {
+      id,
+      ...insertLog,
+      isVerified: false,
+      createdAt: new Date(),
+    };
+    
+    this.contaminationLogs.set(id, log);
+    
+    // Create activity log
+    await this.createActivity({
+      type: "contamination_reported",
+      description: `Contamination reported for batch: ${insertLog.contaminationType} (${insertLog.contaminationSeverity} severity)`,
+      entityId: insertLog.batchId,
+      entityType: "production_batch",
+    });
+    
+    return log;
   }
 
   // Inventory
