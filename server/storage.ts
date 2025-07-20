@@ -1554,6 +1554,36 @@ export class MemStorage implements IStorage {
     return this.payroll.delete(id);
   }
 
+  async getTodayAttendance(userId: number, date: Date): Promise<Attendance | undefined> {
+    // Get employee by userId first
+    const employee = await this.getEmployeeByUserId(userId);
+    if (!employee) return undefined;
+
+    // Find today's attendance record for this employee
+    const dateStr = date.toISOString().split('T')[0];
+    for (const attendance of this.attendance.values()) {
+      if (attendance.employeeId === employee.id && 
+          attendance.date.toISOString().split('T')[0] === dateStr) {
+        return attendance;
+      }
+    }
+    return undefined;
+  }
+
+  async getEmployeeByUserId(userId: number): Promise<Employee | undefined> {
+    // Get user first to get their email
+    const user = this.users.get(userId);
+    if (!user || !user.email) return undefined;
+
+    // Find employee by email (assuming employee email matches user email)
+    for (const employee of this.employees.values()) {
+      if (employee.email === user.email) {
+        return employee;
+      }
+    }
+    return undefined;
+  }
+
   // Role Management
   async getRoles(): Promise<Role[]> {
     return Array.from(this.roles.values());
