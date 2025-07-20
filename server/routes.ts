@@ -568,13 +568,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/production-batches", async (req, res) => {
+  app.post("/api/production-batches", isAuthenticated, async (req, res) => {
     try {
+      console.log("Creating production batch with data:", req.body);
       const validatedData = insertProductionBatchSchema.parse(req.body);
       const batch = await storage.createProductionBatch(validatedData);
       res.status(201).json(batch);
     } catch (error) {
-      res.status(400).json({ message: "Invalid batch data", error });
+      console.error("Production batch creation error:", error);
+      if (error && typeof error === 'object' && 'issues' in error) {
+        // Zod validation error
+        const zodError = error as any;
+        const fieldErrors = zodError.issues?.map((err: any) => `${err.path.join('.')}: ${err.message}`).join(', ') || 'Validation failed';
+        res.status(400).json({ 
+          message: `Validation failed: ${fieldErrors}`,
+          errors: zodError.issues 
+        });
+      } else {
+        res.status(500).json({ message: "Failed to create production batch. Please try again." });
+      }
     }
   });
 

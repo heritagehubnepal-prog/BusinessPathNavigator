@@ -50,16 +50,23 @@ export default function BatchForm({ open, onOpenChange }: BatchFormProps) {
       startDate: new Date().toISOString().split('T')[0],
       status: "inoculation",
       notes: "",
+      initialWeight: undefined,
+      expectedHarvestDate: "",
     },
   });
 
   const createBatchMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const response = await apiRequest("POST", "/api/production-batches", {
+      console.log("Form data being sent:", data);
+      const payload = {
         ...data,
         startDate: new Date(data.startDate),
-        expectedHarvestDate: data.expectedHarvestDate ? new Date(data.expectedHarvestDate) : undefined,
-      });
+        expectedHarvestDate: data.expectedHarvestDate ? new Date(data.expectedHarvestDate) : null,
+        initialWeight: data.initialWeight ? parseFloat(data.initialWeight.toString()) : null,
+      };
+      console.log("API payload:", payload);
+      
+      const response = await apiRequest("POST", "/api/production-batches", payload);
       return response.json();
     },
     onSuccess: () => {
@@ -73,10 +80,21 @@ export default function BatchForm({ open, onOpenChange }: BatchFormProps) {
       form.reset();
       onOpenChange(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Batch creation error:", error);
+      let errorMessage = "Failed to create production batch";
+      
+      if (error.message.includes("Validation failed")) {
+        // Extract the validation error details
+        const match = error.message.match(/Validation failed: (.+)/);
+        if (match) {
+          errorMessage = match[1];
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create production batch",
+        description: errorMessage,
         variant: "destructive",
       });
     },

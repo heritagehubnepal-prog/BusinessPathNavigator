@@ -132,6 +132,16 @@ The system is designed for scalability and maintainability, with clear separatio
 
 ### Recent Updates (July 2025)
 
+**Enhanced Error Handling & User Experience (July 20, 2025):**
+- **Clear Validation Messages**: Replaced generic "Failed to create production batch" with specific field-level error messages
+- **Enhanced API Error Handling**: Comprehensive Zod validation error parsing to show exactly which fields need correction
+- **Frontend Error Display**: Improved error message extraction and display in toast notifications
+- **Data Transformation**: Added robust string-to-number conversion for form fields with proper null/undefined handling
+- **Development Debugging**: Added detailed console logging for form data and API payloads to aid troubleshooting
+- **Professional Error Communication**: Error messages now guide users exactly what to fix (e.g., "batchNumber: Batch number is required")
+- **Form Validation Enhancement**: Improved default values and data type handling for optional numeric fields
+- **User-Friendly Interface**: Error messages written in simple, everyday language for non-technical users
+
 **Comprehensive Security Audit & Hardening (July 20, 2025):**
 - **Critical Security Fixes**: Resolved 4 critical vulnerabilities including session secret hardcoding, missing CSRF protection, rate limiting, and security headers
 - **Authentication Security**: Enhanced with strict rate limiting (5 login attempts per 15 minutes), proper session configuration, and admin approval workflow

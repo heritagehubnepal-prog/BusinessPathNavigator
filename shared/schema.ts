@@ -320,6 +320,37 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
 export const insertProductionBatchSchema = createInsertSchema(productionBatches).omit({
   id: true,
   createdAt: true,
+}).extend({
+  batchNumber: z.string().min(1, "Batch number is required"),
+  productType: z.string().min(1, "Product type is required"), 
+  substrate: z.string().min(1, "Substrate is required"),
+  startDate: z.date({ required_error: "Start date is required" }),
+  status: z.string().min(1, "Status is required").default("inoculation"),
+  expectedHarvestDate: z.date().optional().nullable(),
+  actualHarvestDate: z.date().optional().nullable(),
+  initialWeight: z.union([z.string(), z.number()]).transform(val => {
+    if (typeof val === 'string') {
+      const num = parseFloat(val);
+      return isNaN(num) ? 0 : num;
+    }
+    return val;
+  }).optional(),
+  harvestedWeight: z.union([z.string(), z.number()]).transform(val => {
+    if (typeof val === 'string') {
+      const num = parseFloat(val);
+      return isNaN(num) ? 0 : num;
+    }
+    return val;
+  }).optional().nullable(),
+  contaminationRate: z.union([z.string(), z.number()]).transform(val => {
+    if (typeof val === 'string') {
+      const num = parseFloat(val);
+      return isNaN(num) ? 0 : num;
+    }
+    return val;
+  }).optional().nullable(),
+  locationId: z.number().optional().nullable(),
+  notes: z.string().optional().nullable(),
 });
 
 export const insertInventorySchema = createInsertSchema(inventory).omit({
