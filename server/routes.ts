@@ -577,15 +577,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Production batch creation error:", error);
       if (error && typeof error === 'object' && 'issues' in error) {
-        // Zod validation error
+        // Zod validation error - provide clear, actionable feedback
         const zodError = error as any;
-        const fieldErrors = zodError.issues?.map((err: any) => `${err.path.join('.')}: ${err.message}`).join(', ') || 'Validation failed';
-        res.status(400).json({ 
-          message: `Validation failed: ${fieldErrors}`,
-          errors: zodError.issues 
-        });
+        const issues = zodError.issues || [];
+        
+        if (issues.length > 0) {
+          // Get the first error for simpler user feedback
+          const firstError = issues[0];
+          let userMessage = "";
+          
+          switch (firstError.path[0]) {
+            case "batchNumber":
+              userMessage = "Please enter a batch number (example: BATCH-001)";
+              break;
+            case "productType":
+              userMessage = "Please select a product type from the dropdown menu";
+              break;
+            case "substrate":
+              userMessage = "Please select a substrate type from the dropdown menu";
+              break;
+            case "startDate":
+              userMessage = "Please select a valid start date";
+              break;
+            case "expectedHarvestDate":
+              userMessage = "Please select a valid expected harvest date";
+              break;
+            case "initialWeight":
+              userMessage = "Please enter a valid weight number or leave empty";
+              break;
+            default:
+              userMessage = firstError.message;
+          }
+          
+          res.status(400).json({ 
+            message: userMessage,
+            field: firstError.path[0],
+            errors: issues 
+          });
+        } else {
+          res.status(400).json({ message: "Please check all required fields and try again" });
+        }
       } else {
-        res.status(500).json({ message: "Failed to create production batch. Please try again." });
+        res.status(500).json({ message: "Unable to save production batch. Please try again or contact support." });
       }
     }
   });
@@ -627,13 +660,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory", async (req, res) => {
+  app.post("/api/inventory", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertInventorySchema.parse(req.body);
       const item = await storage.createInventoryItem(validatedData);
       res.status(201).json(item);
     } catch (error) {
-      res.status(400).json({ message: "Invalid inventory data", error });
+      console.error("Inventory creation error:", error);
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const zodError = error as any;
+        const issues = zodError.issues || [];
+        
+        if (issues.length > 0) {
+          const firstError = issues[0];
+          let userMessage = "";
+          
+          switch (firstError.path[0]) {
+            case "name":
+              userMessage = "Please enter an item name";
+              break;
+            case "category":
+              userMessage = "Please select a category from the dropdown";
+              break;
+            case "quantity":
+              userMessage = "Please enter a valid quantity number";
+              break;
+            case "unit":
+              userMessage = "Please enter the unit of measurement (e.g., kg, pieces)";
+              break;
+            default:
+              userMessage = firstError.message;
+          }
+          
+          res.status(400).json({ 
+            message: userMessage,
+            field: firstError.path[0]
+          });
+        } else {
+          res.status(400).json({ message: "Please check all required fields and try again" });
+        }
+      } else {
+        res.status(500).json({ message: "Unable to save inventory item. Please try again." });
+      }
     }
   });
 
@@ -661,13 +729,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/financial-transactions", async (req, res) => {
+  app.post("/api/financial-transactions", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertFinancialTransactionSchema.parse(req.body);
       const transaction = await storage.createFinancialTransaction(validatedData);
       res.status(201).json(transaction);
     } catch (error) {
-      res.status(400).json({ message: "Invalid transaction data", error });
+      console.error("Financial transaction creation error:", error);
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const zodError = error as any;
+        const issues = zodError.issues || [];
+        
+        if (issues.length > 0) {
+          const firstError = issues[0];
+          let userMessage = "";
+          
+          switch (firstError.path[0]) {
+            case "type":
+              userMessage = "Please select whether this is income or expense";
+              break;
+            case "amount":
+              userMessage = "Please enter a valid amount (e.g., 1000.50)";
+              break;
+            case "description":
+              userMessage = "Please enter a description for this transaction";
+              break;
+            case "category":
+              userMessage = "Please select a category from the dropdown";
+              break;
+            case "date":
+              userMessage = "Please select a valid date";
+              break;
+            default:
+              userMessage = firstError.message;
+          }
+          
+          res.status(400).json({ 
+            message: userMessage,
+            field: firstError.path[0]
+          });
+        } else {
+          res.status(400).json({ message: "Please check all required fields and try again" });
+        }
+      } else {
+        res.status(500).json({ message: "Unable to save financial transaction. Please try again." });
+      }
     }
   });
 
@@ -715,13 +821,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tasks", async (req, res) => {
+  app.post("/api/tasks", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertTaskSchema.parse(req.body);
       const task = await storage.createTask(validatedData);
       res.status(201).json(task);
     } catch (error) {
-      res.status(400).json({ message: "Invalid task data", error });
+      console.error("Task creation error:", error);
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const zodError = error as any;
+        const issues = zodError.issues || [];
+        
+        if (issues.length > 0) {
+          const firstError = issues[0];
+          let userMessage = "";
+          
+          switch (firstError.path[0]) {
+            case "title":
+              userMessage = "Please enter a task title";
+              break;
+            case "description":
+              userMessage = "Please enter a task description";
+              break;
+            case "priority":
+              userMessage = "Please select a priority level";
+              break;
+            case "status":
+              userMessage = "Please select a status";
+              break;
+            case "dueDate":
+              userMessage = "Please select a valid due date";
+              break;
+            case "assigneeId":
+              userMessage = "Please assign this task to someone";
+              break;
+            default:
+              userMessage = firstError.message;
+          }
+          
+          res.status(400).json({ 
+            message: userMessage,
+            field: firstError.path[0]
+          });
+        } else {
+          res.status(400).json({ message: "Please check all required fields and try again" });
+        }
+      } else {
+        res.status(500).json({ message: "Unable to save task. Please try again." });
+      }
     }
   });
 

@@ -321,34 +321,43 @@ export const insertProductionBatchSchema = createInsertSchema(productionBatches)
   id: true,
   createdAt: true,
 }).extend({
-  batchNumber: z.string().min(1, "Batch number is required"),
-  productType: z.string().min(1, "Product type is required"), 
-  substrate: z.string().min(1, "Substrate is required"),
-  startDate: z.date({ required_error: "Start date is required" }),
+  batchNumber: z.string().min(1, "Please enter a batch number (e.g., BATCH-001)"),
+  productType: z.string().min(1, "Please select a product type from the dropdown"), 
+  substrate: z.string().min(1, "Please select a substrate type from the dropdown"),
+  startDate: z.union([
+    z.string().transform(str => new Date(str)),
+    z.date()
+  ]).refine(date => !isNaN(date.getTime()), {
+    message: "Please enter a valid start date"
+  }),
   status: z.string().min(1, "Status is required").default("inoculation"),
-  expectedHarvestDate: z.date().optional().nullable(),
-  actualHarvestDate: z.date().optional().nullable(),
-  initialWeight: z.union([z.string(), z.number()]).transform(val => {
-    if (typeof val === 'string') {
-      const num = parseFloat(val);
-      return isNaN(num) ? 0 : num;
-    }
-    return val;
-  }).optional(),
-  harvestedWeight: z.union([z.string(), z.number()]).transform(val => {
-    if (typeof val === 'string') {
-      const num = parseFloat(val);
-      return isNaN(num) ? 0 : num;
-    }
-    return val;
+  expectedHarvestDate: z.union([
+    z.string().transform(str => str ? new Date(str) : null),
+    z.date(),
+    z.null()
+  ]).optional().nullable(),
+  actualHarvestDate: z.union([
+    z.string().transform(str => str ? new Date(str) : null),
+    z.date(),
+    z.null()
+  ]).optional().nullable(),
+  initialWeight: z.union([
+    z.string().transform(val => val === "" ? null : parseFloat(val)),
+    z.number(),
+    z.null()
+  ]).refine(val => val === null || val === undefined || val >= 0, {
+    message: "Initial weight must be a positive number or left empty"
   }).optional().nullable(),
-  contaminationRate: z.union([z.string(), z.number()]).transform(val => {
-    if (typeof val === 'string') {
-      const num = parseFloat(val);
-      return isNaN(num) ? 0 : num;
-    }
-    return val;
-  }).optional().nullable(),
+  harvestedWeight: z.union([
+    z.string().transform(val => val === "" ? null : parseFloat(val)),
+    z.number(),
+    z.null()
+  ]).optional().nullable(),
+  contaminationRate: z.union([
+    z.string().transform(val => val === "" ? null : parseFloat(val)),
+    z.number(),
+    z.null()
+  ]).optional().nullable(),
   locationId: z.number().optional().nullable(),
   notes: z.string().optional().nullable(),
 });

@@ -58,11 +58,17 @@ export default function BatchForm({ open, onOpenChange }: BatchFormProps) {
   const createBatchMutation = useMutation({
     mutationFn: async (data: FormData) => {
       console.log("Form data being sent:", data);
+      
+      // Send raw data - let the backend handle conversion
       const payload = {
-        ...data,
-        startDate: new Date(data.startDate),
-        expectedHarvestDate: data.expectedHarvestDate ? new Date(data.expectedHarvestDate) : null,
-        initialWeight: data.initialWeight ? parseFloat(data.initialWeight.toString()) : null,
+        batchNumber: data.batchNumber,
+        productType: data.productType,
+        substrate: data.substrate,
+        startDate: data.startDate,
+        expectedHarvestDate: data.expectedHarvestDate || null,
+        status: data.status || "inoculation",
+        initialWeight: data.initialWeight || null,
+        notes: data.notes || null,
       };
       console.log("API payload:", payload);
       
