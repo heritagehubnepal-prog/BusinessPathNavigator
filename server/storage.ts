@@ -1531,6 +1531,34 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
+  async approveUser(id: number, approvedBy: number): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ 
+        isApprovedByAdmin: true,
+        approvedBy: approvedBy,
+        approvedAt: new Date(),
+        registrationStatus: 'approved'
+      })
+      .where(eq(users.id, id))
+      .returning();
+      
+    if (user) {
+      await this.createActivity({
+        type: "user_approved",
+        description: `User ${user.firstName} ${user.lastName} (${user.employeeId}) approved by administrator`,
+        entityId: id,
+        entityType: "user",
+      });
+    }
+    
+    return user;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return true;
+  }
+
   // Production Batches
   async getProductionBatches(): Promise<ProductionBatch[]> {
     return await db.select().from(productionBatches).orderBy(desc(productionBatches.createdAt));

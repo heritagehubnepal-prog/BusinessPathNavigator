@@ -133,6 +133,21 @@ class AuthService {
         };
       }
 
+      // Check if user is active and approved
+      if (!user.isActive) {
+        return {
+          success: false,
+          message: "Your account has been deactivated. Please contact HR for assistance."
+        };
+      }
+
+      if (!user.isApprovedByAdmin) {
+        return {
+          success: false,
+          message: "Your account is pending administrator approval. Please contact HR for assistance."
+        };
+      }
+
       // Update last login
       await storage.updateUserLastLogin(user.id);
 
@@ -141,12 +156,14 @@ class AuthService {
         message: "Login successful!",
         user: {
           id: user.id,
-          username: user.username,
+          employeeId: user.employeeId,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           roleId: user.roleId,
-          isEmailVerified: user.isEmailVerified
+          isEmailVerified: user.isEmailVerified,
+          isActive: user.isActive,
+          isApprovedByAdmin: user.isApprovedByAdmin
         }
       };
     } catch (error) {

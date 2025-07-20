@@ -20,6 +20,46 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Get current authenticated user
+  app.get("/api/auth/user", async (req, res) => {
+    try {
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Get fresh user data from storage
+      const user = await storage.getUserByEmail(req.session.user.email);
+      if (!user || !user.isActive || !user.isApprovedByAdmin) {
+        req.session.destroy((err) => {
+          if (err) console.error("Session destroy error:", err);
+        });
+        return res.status(401).json({ message: "Account inactive or not approved" });
+      }
+
+      // Update last login
+      await storage.updateUserLastLogin(user.id);
+
+      // Return user data without sensitive info
+      const { password, emailVerificationToken, passwordResetToken, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ message: "Failed to get user data" });
+    }
+  });
+
+  // Logout route
+  app.get("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.clearCookie('connect.sid'); // Clear the session cookie
+      res.redirect("/auth");
+    });
+  });
+
   // Authentication Routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -60,9 +100,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await authService.loginUser(validatedData);
       
       if (result.success && result.user) {
+        // Check if user is approved and active
+        if (!result.user.isActive || !result.user.isApprovedByAdmin) {
+          return res.status(403).json({ 
+            message: "Your account is pending administrator approval. Please contact HR for assistance." 
+          });
+        }
+
         // Set session data
         req.session.userId = result.user.id.toString();
-        req.session.user = result.user;
+        req.session.user = {
+          id: result.user.id,
+          email: result.user.email,
+          firstName: result.user.firstName,
+          lastName: result.user.lastName,
+          roleId: result.user.roleId,
+        };
         res.json({ message: result.message, user: result.user });
       } else {
         res.status(401).json({ message: result.message });

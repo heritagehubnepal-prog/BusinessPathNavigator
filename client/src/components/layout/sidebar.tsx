@@ -16,6 +16,7 @@ import {
   LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
@@ -35,6 +36,7 @@ const navigation = [
 
 export default function Sidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
 
   return (
     <div className="w-64 sidebar-modern shadow-2xl">
@@ -87,8 +89,12 @@ export default function Sidebar() {
                   className="w-8 h-8 rounded-full"
                 />
                 <div>
-                  <p className="text-sm font-medium text-white">Akash Rai</p>
-                  <p className="text-xs text-gray-400">Administrator</p>
+                  <p className="text-sm font-medium text-white">
+                    {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {user?.employeeId || 'User'}
+                  </p>
                 </div>
               </div>
               <button
