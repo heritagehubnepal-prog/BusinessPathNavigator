@@ -1,10 +1,15 @@
-import bcrypt from 'bcrypt';
-import crypto from 'crypto';
-import { emailService } from './emailService';
-import { storage } from './storage';
-import type { InsertUser, User } from '@shared/schema';
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { storage } from "./storage";
+import { emailService } from "./emailService";
 
-export interface CreateUserRequest {
+interface AuthResult {
+  success: boolean;
+  message: string;
+  user?: any;
+}
+
+interface RegisterData {
   username: string;
   email: string;
   password: string;
@@ -13,259 +18,304 @@ export interface CreateUserRequest {
   roleId?: number;
 }
 
-export interface LoginRequest {
+interface LoginData {
   email: string;
   password: string;
 }
 
-export interface VerifyEmailRequest {
+interface VerifyData {
   token?: string;
   code?: string;
 }
 
-export interface ResetPasswordRequest {
+interface ResetData {
   token: string;
   newPassword: string;
 }
 
 class AuthService {
-  async createUser(userData: CreateUserRequest): Promise<{ user: User; success: boolean; message: string }> {
+  private generateToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  private generateVerificationCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  async createUser(data: RegisterData): Promise<AuthResult> {
     try {
       // Check if user already exists
-      const existingUser = await storage.getUserByEmail(userData.email);
+      const existingUser = await storage.getUserByEmail(data.email);
       if (existingUser) {
-        return { user: null as any, success: false, message: 'User with this email already exists' };
+        return {
+          success: false,
+          message: "User with this email already exists"
+        };
       }
 
-      const existingUsername = await storage.getUserByUsername(userData.username);
+      const existingUsername = await storage.getUserByUsername(data.username);
       if (existingUsername) {
-        return { user: null as any, success: false, message: 'Username is already taken' };
+        return {
+          success: false,
+          message: "Username is already taken"
+        };
       }
 
       // Hash password
-      const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(data.password, 12);
 
-      // Generate verification token and code
-      const verificationToken = emailService.generateVerificationToken();
-      const verificationCode = emailService.generateVerificationCode();
+      // Generate verification token
+      const verificationToken = this.generateToken();
       const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
       // Create user
-      const newUser: InsertUser = {
-        username: userData.username,
-        email: userData.email,
+      const newUser = await storage.createUser({
+        username: data.username,
+        email: data.email,
         password: hashedPassword,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        roleId: userData.roleId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        roleId: data.roleId || 6, // Default to Employee role
         isEmailVerified: false,
         emailVerificationToken: verificationToken,
         emailVerificationExpires: verificationExpires,
-        isActive: true,
-      };
-
-      const user = await storage.createUser(newUser);
+      });
 
       // Send verification email
-      const emailSent = await emailService.sendVerificationEmail(
-        userData.email,
-        verificationToken,
-        verificationCode
-      );
-
-      if (!emailSent) {
-        console.warn('Failed to send verification email, but user was created');
-      }
+      await emailService.sendVerificationEmail(data.email, verificationToken, data.firstName || data.username);
 
       return {
-        user,
         success: true,
-        message: emailSent 
-          ? 'User created successfully. Please check your email to verify your account.'
-          : 'User created successfully. Email verification is pending.'
+        message: "Registration successful! Please check your email to verify your account.",
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          isEmailVerified: newUser.isEmailVerified
+        }
       };
     } catch (error) {
-      console.error('Error creating user:', error);
-      return { user: null as any, success: false, message: 'Failed to create user' };
+      console.error("Registration error:", error);
+      return {
+        success: false,
+        message: "Registration failed. Please try again."
+      };
     }
   }
 
-  async loginUser(loginData: LoginRequest): Promise<{ user: User | null; success: boolean; message: string }> {
+  async loginUser(data: LoginData): Promise<AuthResult> {
     try {
       // Find user by email
-      const user = await storage.getUserByEmail(loginData.email);
+      const user = await storage.getUserByEmail(data.email);
       if (!user) {
-        return { user: null, success: false, message: 'Invalid email or password' };
+        return {
+          success: false,
+          message: "Invalid email or password"
+        };
       }
 
-      // Check if user is active
-      if (!user.isActive) {
-        return { user: null, success: false, message: 'Account is deactivated. Please contact support.' };
-      }
-
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(loginData.password, user.password);
+      // Check password
+      const isPasswordValid = await bcrypt.compare(data.password, user.password);
       if (!isPasswordValid) {
-        return { user: null, success: false, message: 'Invalid email or password' };
+        return {
+          success: false,
+          message: "Invalid email or password"
+        };
       }
 
       // Check if email is verified
       if (!user.isEmailVerified) {
-        return { 
-          user: null, 
-          success: false, 
-          message: 'Please verify your email address before logging in. Check your inbox for the verification email.' 
+        return {
+          success: false,
+          message: "Please verify your email before logging in. Check your inbox for verification instructions."
         };
       }
 
-      // Update last login time
+      // Update last login
       await storage.updateUserLastLogin(user.id);
 
-      // Remove sensitive information before returning
-      const { password, emailVerificationToken, passwordResetToken, ...safeUser } = user;
-
       return {
-        user: safeUser as User,
         success: true,
-        message: 'Login successful'
+        message: "Login successful!",
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          roleId: user.roleId,
+          isEmailVerified: user.isEmailVerified
+        }
       };
     } catch (error) {
-      console.error('Error during login:', error);
-      return { user: null, success: false, message: 'Login failed' };
+      console.error("Login error:", error);
+      return {
+        success: false,
+        message: "Login failed. Please try again."
+      };
     }
   }
 
-  async verifyEmail(verificationData: VerifyEmailRequest): Promise<{ success: boolean; message: string }> {
+  async verifyEmail(data: VerifyData): Promise<AuthResult> {
     try {
-      if (!verificationData.token && !verificationData.code) {
-        return { success: false, message: 'Verification token or code is required' };
+      if (!data.token) {
+        return {
+          success: false,
+          message: "Verification token is required"
+        };
       }
 
-      let user: User | null = null;
-
-      if (verificationData.token) {
-        user = await storage.getUserByVerificationToken(verificationData.token);
-      } else if (verificationData.code) {
-        // For code verification, we'd need to store codes in database
-        // For now, we'll use token-based verification
-        return { success: false, message: 'Code verification not implemented yet' };
-      }
-
+      // Find user by verification token
+      const user = await storage.getUserByVerificationToken(data.token);
       if (!user) {
-        return { success: false, message: 'Invalid or expired verification token' };
+        return {
+          success: false,
+          message: "Invalid or expired verification token"
+        };
       }
 
-      if (user.isEmailVerified) {
-        return { success: true, message: 'Email is already verified' };
+      // Check if token is expired
+      if (user.emailVerificationExpires && new Date() > user.emailVerificationExpires) {
+        return {
+          success: false,
+          message: "Verification token has expired. Please request a new one."
+        };
       }
 
-      // Check if verification token has expired
-      if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
-        return { success: false, message: 'Verification token has expired. Please request a new one.' };
-      }
-
-      // Verify email
+      // Verify the user
       await storage.verifyUserEmail(user.id);
 
       // Send welcome email
-      await emailService.sendWelcomeEmail(user.email!, user.firstName || user.username);
-
-      return { success: true, message: 'Email verified successfully! You can now log in.' };
-    } catch (error) {
-      console.error('Error verifying email:', error);
-      return { success: false, message: 'Email verification failed' };
-    }
-  }
-
-  async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
-    try {
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        // Don't reveal if email exists for security
-        return { success: true, message: 'If the email exists, a password reset link has been sent.' };
-      }
-
-      // Generate reset token and code
-      const resetToken = emailService.generateVerificationToken();
-      const resetCode = emailService.generateVerificationCode();
-      const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-      // Update user with reset token
-      await storage.setPasswordResetToken(user.id, resetToken, resetExpires);
-
-      // Send reset email
-      const emailSent = await emailService.sendPasswordResetEmail(email, resetToken, resetCode);
+      await emailService.sendWelcomeEmail(user.email, user.firstName || user.username);
 
       return {
         success: true,
-        message: emailSent 
-          ? 'Password reset email sent. Please check your inbox.'
-          : 'Password reset initiated. Email delivery is pending.'
+        message: "Email verified successfully! You can now log in to your account."
       };
     } catch (error) {
-      console.error('Error requesting password reset:', error);
-      return { success: false, message: 'Failed to process password reset request' };
+      console.error("Email verification error:", error);
+      return {
+        success: false,
+        message: "Email verification failed. Please try again."
+      };
     }
   }
 
-  async resetPassword(resetData: ResetPasswordRequest): Promise<{ success: boolean; message: string }> {
+  async requestPasswordReset(email: string): Promise<AuthResult> {
     try {
-      const user = await storage.getUserByPasswordResetToken(resetData.token);
+      const user = await storage.getUserByEmail(email);
       if (!user) {
-        return { success: false, message: 'Invalid or expired reset token' };
+        // Don't reveal if email exists or not for security
+        return {
+          success: true,
+          message: "If an account with that email exists, you will receive password reset instructions."
+        };
       }
 
-      // Check if reset token has expired
-      if (user.passwordResetExpires && user.passwordResetExpires < new Date()) {
-        return { success: false, message: 'Reset token has expired. Please request a new one.' };
+      // Generate reset token
+      const resetToken = this.generateToken();
+      const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      // Save reset token
+      await storage.setPasswordResetToken(user.id, resetToken, resetExpires);
+
+      // Send reset email
+      await emailService.sendPasswordResetEmail(user.email, resetToken, user.firstName || user.username);
+
+      return {
+        success: true,
+        message: "If an account with that email exists, you will receive password reset instructions."
+      };
+    } catch (error) {
+      console.error("Password reset request error:", error);
+      return {
+        success: false,
+        message: "Failed to process password reset request. Please try again."
+      };
+    }
+  }
+
+  async resetPassword(data: ResetData): Promise<AuthResult> {
+    try {
+      // Find user by reset token
+      const user = await storage.getUserByPasswordResetToken(data.token);
+      if (!user) {
+        return {
+          success: false,
+          message: "Invalid or expired reset token"
+        };
+      }
+
+      // Check if token is expired
+      if (user.passwordResetExpires && new Date() > user.passwordResetExpires) {
+        return {
+          success: false,
+          message: "Reset token has expired. Please request a new password reset."
+        };
       }
 
       // Hash new password
-      const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(resetData.newPassword, saltRounds);
+      const hashedPassword = await bcrypt.hash(data.newPassword, 12);
 
       // Update password and clear reset token
       await storage.updateUserPassword(user.id, hashedPassword);
 
-      return { success: true, message: 'Password reset successfully. You can now log in with your new password.' };
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      return { success: false, message: 'Failed to reset password' };
-    }
-  }
-
-  async resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
-    try {
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return { success: false, message: 'User not found' };
-      }
-
-      if (user.isEmailVerified) {
-        return { success: false, message: 'Email is already verified' };
-      }
-
-      // Generate new verification token
-      const verificationToken = emailService.generateVerificationToken();
-      const verificationCode = emailService.generateVerificationCode();
-      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-      // Update user with new verification token
-      await storage.updateVerificationToken(user.id, verificationToken, verificationExpires);
-
-      // Send verification email
-      const emailSent = await emailService.sendVerificationEmail(email, verificationToken, verificationCode);
+      // Send confirmation email
+      await emailService.sendPasswordResetConfirmationEmail(user.email, user.firstName || user.username);
 
       return {
         success: true,
-        message: emailSent 
-          ? 'Verification email sent. Please check your inbox.'
-          : 'Verification email initiated. Email delivery is pending.'
+        message: "Password reset successfully! You can now log in with your new password."
       };
     } catch (error) {
-      console.error('Error resending verification email:', error);
-      return { success: false, message: 'Failed to resend verification email' };
+      console.error("Password reset error:", error);
+      return {
+        success: false,
+        message: "Password reset failed. Please try again."
+      };
+    }
+  }
+
+  async resendVerificationEmail(email: string): Promise<AuthResult> {
+    try {
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return {
+          success: true,
+          message: "If an account with that email exists, a new verification email has been sent."
+        };
+      }
+
+      if (user.isEmailVerified) {
+        return {
+          success: false,
+          message: "This email is already verified. You can log in to your account."
+        };
+      }
+
+      // Generate new verification token
+      const verificationToken = this.generateToken();
+      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Update verification token
+      await storage.updateVerificationToken(user.id, verificationToken, verificationExpires);
+
+      // Send new verification email
+      await emailService.sendVerificationEmail(user.email, verificationToken, user.firstName || user.username);
+
+      return {
+        success: true,
+        message: "If an account with that email exists, a new verification email has been sent."
+      };
+    } catch (error) {
+      console.error("Resend verification error:", error);
+      return {
+        success: false,
+        message: "Failed to resend verification email. Please try again."
+      };
     }
   }
 }
