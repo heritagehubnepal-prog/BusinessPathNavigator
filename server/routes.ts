@@ -141,6 +141,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: "Invalid email address" });
     }
   });
+
+  // Get all users
+  app.get("/api/users", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Don't send password hashes to frontend
+      const sanitizedUsers = users.map(user => {
+        const { password, emailVerificationToken, passwordResetToken, ...safeUser } = user;
+        return safeUser;
+      });
+      res.json(sanitizedUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   // Locations
   app.get("/api/locations", async (req, res) => {
     try {

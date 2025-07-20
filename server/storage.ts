@@ -52,7 +52,7 @@ import {
   type InsertPayroll,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Locations
@@ -63,6 +63,7 @@ export interface IStorage {
   deleteLocation(id: number): Promise<boolean>;
 
   // Users
+  getAllUsers(): Promise<User[]>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -1419,6 +1420,10 @@ export class DatabaseStorage implements IStorage {
         passwordResetExpires: null 
       })
       .where(eq(users.id, id));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
   // Production Batches

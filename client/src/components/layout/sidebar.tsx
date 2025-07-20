@@ -11,7 +11,8 @@ import {
   ShoppingCart,
   MapPin,
   Users,
-  Shield
+  Shield,
+  UserPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ const navigation = [
   { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Locations", href: "/locations", icon: MapPin },
   { name: "Human Resources", href: "/hr", icon: Users },
+  { name: "User Management", href: "/users", icon: UserPlus },
   { name: "Role Management", href: "/roles", icon: Shield },
   { name: "Analytics", href: "/analytics", icon: PieChart },
   { name: "Reports", href: "/reports", icon: FileText },
