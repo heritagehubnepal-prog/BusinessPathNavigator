@@ -12,7 +12,8 @@ import {
   MapPin,
   Users,
   Shield,
-  UserPlus
+  UserPlus,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,16 +78,25 @@ export default function Sidebar() {
         
         <div className="mt-8 px-4">
           <div className="border-t border-gray-600 pt-4">
-            <div className="flex items-center space-x-3 px-4 py-2">
-              <img 
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40" 
-                alt="User avatar" 
-                className="w-8 h-8 rounded-full"
-              />
-              <div>
-                <p className="text-sm font-medium">Akash Rai</p>
-                <p className="text-xs text-gray-400">Founder/CEO</p>
+            <div className="flex items-center justify-between px-4 py-2">
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40" 
+                  alt="User avatar" 
+                  className="w-8 h-8 rounded-full"
+                />
+                <div>
+                  <p className="text-sm font-medium text-white">Akash Rai</p>
+                  <p className="text-xs text-gray-400">Administrator</p>
+                </div>
               </div>
+              <button
+                onClick={() => window.location.href = '/api/logout'}
+                className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>

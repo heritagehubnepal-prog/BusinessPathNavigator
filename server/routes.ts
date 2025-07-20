@@ -142,6 +142,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Logout route
+  app.post("/api/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+
+  // Get logout route (for direct navigation)
+  app.get("/api/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.redirect("/auth");
+    });
+  });
+
+  // Auto-verify test users (development only)
+  app.post("/api/auth/auto-verify-test-users", async (req, res) => {
+    try {
+      const testEmails = [
+        "demo@mycopath.com.np",
+        "production@mycopath.com.np", 
+        "sales@mycopath.com.np",
+        "qc@mycopath.com.np"
+      ];
+
+      let verifiedCount = 0;
+      for (const email of testEmails) {
+        const user = await storage.getUserByEmail(email);
+        if (user) {
+          console.log(`Verifying user ${user.email}, current status: ${user.isEmailVerified}`);
+          if (!user.isEmailVerified) {
+            await storage.verifyUserEmail(user.id);
+            verifiedCount++;
+            console.log(`✅ Verified ${user.email}`);
+          } else {
+            console.log(`Already verified: ${user.email}`);
+          }
+        } else {
+          console.log(`User not found: ${email}`);
+        }
+      }
+
+      res.json({ 
+        message: `Test users verified successfully. ${verifiedCount} users were updated.`,
+        verifiedCount
+      });
+    } catch (error) {
+      console.error("Auto-verify error:", error);
+      res.status(500).json({ message: "Failed to auto-verify test users", error: error.message });
+    }
+  });
+
   // Get all users
   app.get("/api/users", async (req, res) => {
     try {
