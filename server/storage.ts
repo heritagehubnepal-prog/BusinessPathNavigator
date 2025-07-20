@@ -564,6 +564,20 @@ export class MemStorage implements IStorage {
     // Add sample employees for HR management
     const defaultEmployees: InsertEmployee[] = [
       {
+        employeeId: "TEST-001",
+        name: "Test User",
+        email: "test@mycopath.com.np",
+        phone: "+977-9800000000",
+        position: "System Tester",
+        department: "Administration",
+        salary: "50000.00",
+        hireDate: new Date("2024-01-01"),
+        status: "active",
+        locationId: 1,
+        skills: "System testing, User acceptance testing",
+        notes: "Test account for system validation",
+      },
+      {
         employeeId: "EMP001",
         name: "Akash Rai",
         email: "akash@mycopath.com.np",
@@ -689,6 +703,96 @@ export class MemStorage implements IStorage {
 
     defaultPayroll.forEach(payroll => {
       this.createPayroll(payroll);
+    });
+
+    // Add test users for development
+    const testUsers: InsertUser[] = [
+      {
+        employeeId: "TEST-001",
+        email: "test@mycopath.com.np",
+        passwordHash: "$2b$10$PC/TUYTEtu3Xnefl6adGxOiHFqq/bDLF3OLww.2KklX0cBjWcPAtC", // password: test123
+        firstName: "Test",
+        lastName: "User",
+        isEmailVerified: true,
+        isActive: true,
+        isApprovedByAdmin: true,
+        registrationStatus: "approved",
+        approvedBy: "System",
+        approvedAt: new Date(),
+        roleId: 1, // Admin role
+        locationId: 1,
+      },
+      {
+        employeeId: "EMP-001", 
+        email: "akash@mycopath.com.np",
+        passwordHash: "$2b$10$PC/TUYTEtu3Xnefl6adGxOiHFqq/bDLF3OLww.2KklX0cBjWcPAtC", // password: test123
+        firstName: "Akash",
+        lastName: "Rai",
+        isEmailVerified: true,
+        isActive: true,
+        isApprovedByAdmin: true,
+        registrationStatus: "approved",
+        approvedBy: "System",
+        approvedAt: new Date(),
+        roleId: 2, // User role
+        locationId: 1,
+      }
+    ];
+
+    testUsers.forEach(user => {
+      this.createUser(user);
+    });
+
+    // Initialize roles if they don't exist
+    const defaultRoles: InsertRole[] = [
+      {
+        name: "admin",
+        displayName: "Administrator",
+        description: "Full system access with all permissions",
+        permissions: [
+          "users.view", "users.create", "users.edit", "users.delete",
+          "production.view", "production.create", "production.edit", "production.delete",
+          "inventory.view", "inventory.create", "inventory.edit", "inventory.delete",
+          "financial.view", "financial.create", "financial.edit", "financial.delete",
+          "tasks.view", "tasks.create", "tasks.edit", "tasks.delete",
+          "reports.view", "reports.create", "reports.edit", "reports.delete",
+          "analytics.view", "sales.view", "sales.create", "sales.edit", "sales.delete",
+          "hr.view", "hr.create", "hr.edit", "hr.delete",
+          "admin.view", "admin.create", "admin.edit", "admin.delete"
+        ],
+        isActive: true,
+      },
+      {
+        name: "user",
+        displayName: "Regular User",
+        description: "Standard user access for daily operations",
+        permissions: [
+          "production.view", "production.create", "production.edit",
+          "inventory.view", "inventory.create", "inventory.edit",
+          "financial.view", "tasks.view", "tasks.create", "tasks.edit",
+          "reports.view", "analytics.view", "sales.view"
+        ],
+        isActive: true,
+      },
+      {
+        name: "manager",
+        displayName: "Manager",
+        description: "Management level access with extended permissions",
+        permissions: [
+          "users.view", "production.view", "production.create", "production.edit", "production.delete",
+          "inventory.view", "inventory.create", "inventory.edit", "inventory.delete",
+          "financial.view", "financial.create", "financial.edit",
+          "tasks.view", "tasks.create", "tasks.edit", "tasks.delete",
+          "reports.view", "reports.create", "analytics.view",
+          "sales.view", "sales.create", "sales.edit", "sales.delete",
+          "hr.view", "hr.create", "hr.edit"
+        ],
+        isActive: true,
+      },
+    ];
+
+    defaultRoles.forEach(role => {
+      this.createRole(role);
     });
   }
 
