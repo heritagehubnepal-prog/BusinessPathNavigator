@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Role } from "@shared/schema";
 
 const registerSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  employeeId: z.string().min(3, "Employee ID must be at least 3 characters").regex(/^[A-Z0-9-]+$/, "Employee ID must contain only uppercase letters, numbers, and hyphens"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().min(1, "First name is required"),
@@ -55,7 +55,7 @@ export default function AuthPage() {
   const registerForm = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: "",
+      employeeId: "",
       email: "",
       password: "",
       firstName: "",
@@ -105,11 +105,11 @@ export default function AuthPage() {
     },
     onSuccess: (response) => {
       toast({
-        title: "Registration Successful",
-        description: response.message || "Please check your email to verify your account.",
+        title: "Registration Submitted",
+        description: "Your registration has been submitted for administrator approval. You will receive an email once approved.",
       });
       registerForm.reset();
-      setActiveTab("verify");
+      setActiveTab("login");
     },
     onError: (error) => {
       toast({
@@ -340,34 +340,25 @@ export default function AuthPage() {
 
                     <FormField
                       control={registerForm.control}
-                      name="username"
+                      name="employeeId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Username</FormLabel>
+                          <FormLabel>Employee ID</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                              <Input placeholder="Choose username" className="pl-10" {...field} />
+                              <Input 
+                                placeholder="e.g. MYC-001, EMP-2025-001" 
+                                className="pl-10 font-mono" 
+                                {...field} 
+                                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                              />
                             </div>
                           </FormControl>
                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={registerForm.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                              <Input placeholder="Choose username" className="pl-10" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Enter the Employee ID provided by HR Department during onboarding
+                          </p>
                         </FormItem>
                       )}
                     />

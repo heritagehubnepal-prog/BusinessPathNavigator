@@ -17,6 +17,7 @@ import HRPage from "@/pages/hr";
 import RolesManagement from "@/pages/roles";
 import UsersPage from "@/pages/users";
 import AuthPage from "@/pages/auth";
+import UserApproval from "@/pages/user-approval";
 import Sidebar from "@/components/layout/sidebar";
 
 function Router() {
@@ -36,6 +37,7 @@ function Router() {
           <Route path="/hr" component={HRPage} />
           <Route path="/roles" component={RolesManagement} />
           <Route path="/users" component={UsersPage} />
+          <Route path="/user-approval" component={UserApproval} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/reports" component={Reports} />

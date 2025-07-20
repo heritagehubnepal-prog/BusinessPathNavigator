@@ -65,7 +65,7 @@ export interface IStorage {
   // Users
   getAllUsers(): Promise<User[]>;
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmployeeId(employeeId: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByVerificationToken(token: string): Promise<User | undefined>;
   getUserByPasswordResetToken(token: string): Promise<User | undefined>;
@@ -73,6 +73,7 @@ export interface IStorage {
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   updateUserLastLogin(id: number): Promise<void>;
   verifyUserEmail(id: number): Promise<void>;
+  approveUser(id: number, approvedBy: number): Promise<User | undefined>;
   updateVerificationToken(id: number, token: string, expires: Date): Promise<void>;
   setPasswordResetToken(id: number, token: string, expires: Date): Promise<void>;
   updateUserPassword(id: number, hashedPassword: string): Promise<void>;
@@ -741,9 +742,9 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserByEmployeeId(employeeId: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.employeeId === employeeId,
     );
   }
 
@@ -755,10 +756,21 @@ export class MemStorage implements IStorage {
       email: insertUser.email || null,
       firstName: insertUser.firstName || null,
       lastName: insertUser.lastName || null,
-      role: insertUser.role || "worker",
+      roleId: insertUser.roleId || null,
       locationId: insertUser.locationId || null,
-      isActive: insertUser.isActive ?? true,
+      isEmailVerified: insertUser.isEmailVerified ?? false,
+      isActive: insertUser.isActive ?? false, // Default inactive, needs admin approval
+      isApprovedByAdmin: insertUser.isApprovedByAdmin ?? false,
+      registrationStatus: insertUser.registrationStatus || "pending",
+      approvedBy: insertUser.approvedBy || null,
+      approvedAt: insertUser.approvedAt || null,
+      emailVerificationToken: insertUser.emailVerificationToken || null,
+      emailVerificationExpires: insertUser.emailVerificationExpires || null,
+      passwordResetToken: insertUser.passwordResetToken || null,
+      passwordResetExpires: insertUser.passwordResetExpires || null,
+      lastLoginAt: insertUser.lastLoginAt || null,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
     this.users.set(id, user);
     return user;
@@ -768,9 +780,102 @@ export class MemStorage implements IStorage {
     const existing = this.users.get(id);
     if (!existing) return undefined;
     
-    const updated = { ...existing, ...updateUser };
+    const updated = { ...existing, ...updateUser, updatedAt: new Date() };
     this.users.set(id, updated);
     return updated;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+  }
+
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.emailVerificationToken === token,
+    );
+  }
+
+  async getUserByPasswordResetToken(token: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.passwordResetToken === token,
+    );
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.lastLoginAt = new Date();
+      this.users.set(id, user);
+    }
+  }
+
+  async verifyUserEmail(id: number): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.isEmailVerified = true;
+      user.emailVerificationToken = null;
+      user.emailVerificationExpires = null;
+      user.updatedAt = new Date();
+      this.users.set(id, user);
+    }
+  }
+
+  async approveUser(id: number, approvedBy: number): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (user) {
+      user.isApprovedByAdmin = true;
+      user.isActive = true;
+      user.registrationStatus = "approved";
+      user.approvedBy = approvedBy;
+      user.approvedAt = new Date();
+      user.updatedAt = new Date();
+      this.users.set(id, user);
+      return user;
+    }
+    return undefined;
+  }
+
+  async updateVerificationToken(id: number, token: string, expires: Date): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.emailVerificationToken = token;
+      user.emailVerificationExpires = expires;
+      user.updatedAt = new Date();
+      this.users.set(id, user);
+    }
+  }
+
+  async setPasswordResetToken(id: number, token: string, expires: Date): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.passwordResetToken = token;
+      user.passwordResetExpires = expires;
+      user.updatedAt = new Date();
+      this.users.set(id, user);
+    }
+  }
+
+  async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.password = hashedPassword;
+      user.passwordResetToken = null;
+      user.passwordResetExpires = null;
+      user.updatedAt = new Date();
+      this.users.set(id, user);
+    }
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    return this.users.delete(id);
   }
 
   // Production Batches

@@ -10,7 +10,7 @@ interface AuthResult {
 }
 
 interface RegisterData {
-  username: string;
+  employeeId: string;
   email: string;
   password: string;
   firstName?: string;
@@ -53,11 +53,11 @@ class AuthService {
         };
       }
 
-      const existingUsername = await storage.getUserByUsername(data.username);
-      if (existingUsername) {
+      const existingEmployeeId = await storage.getUserByEmployeeId(data.employeeId);
+      if (existingEmployeeId) {
         return {
           success: false,
-          message: "Username is already taken"
+          message: "Employee ID is already registered. Please contact HR if this is an error."
         };
       }
 
@@ -68,9 +68,9 @@ class AuthService {
       const verificationToken = this.generateToken();
       const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-      // Create user
+      // Create user (inactive until admin approval)
       const newUser = await storage.createUser({
-        username: data.username,
+        employeeId: data.employeeId,
         email: data.email,
         password: hashedPassword,
         firstName: data.firstName,

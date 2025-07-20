@@ -37,7 +37,7 @@ export const roles = pgTable("roles", {
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  employeeId: varchar("employee_id", { length: 20 }).notNull().unique(), // HR-assigned Employee ID
   password: text("password").notNull(),
   email: text("email").unique(),
   firstName: text("first_name"),
@@ -45,11 +45,15 @@ export const users = pgTable("users", {
   roleId: integer("role_id").references(() => roles.id), // Foreign key to roles table
   locationId: integer("location_id").references(() => locations.id), // User's primary location
   isEmailVerified: boolean("is_email_verified").default(false),
+  isActive: boolean("is_active").default(false), // Requires admin approval
+  isApprovedByAdmin: boolean("is_approved_by_admin").default(false),
+  approvedBy: integer("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  registrationStatus: varchar("registration_status", { length: 20 }).default("pending"), // pending, approved, rejected
   emailVerificationToken: varchar("email_verification_token", { length: 255 }),
   emailVerificationExpires: timestamp("email_verification_expires"),
   passwordResetToken: varchar("password_reset_token", { length: 255 }),
   passwordResetExpires: timestamp("password_reset_expires"),
-  isActive: boolean("is_active").default(true),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

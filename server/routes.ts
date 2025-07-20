@@ -24,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", async (req, res) => {
     try {
       const registerSchema = z.object({
-        username: z.string().min(3),
+        employeeId: z.string().min(3),
         email: z.string().email(),
         password: z.string().min(6),
         firstName: z.string().optional(),
@@ -36,7 +36,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await authService.createUser(validatedData);
       
       if (result.success) {
-        res.status(201).json({ message: result.message, user: result.user });
+        res.status(201).json({ 
+          message: "Registration submitted! Your account is pending administrator approval. You will receive an email notification once approved.",
+          user: result.user 
+        });
       } else {
         res.status(400).json({ message: result.message });
       }
@@ -205,6 +208,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // User approval routes
+  app.post("/api/users/:id/approve", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const currentUser = req.session?.user; // Assuming we have session middleware
+      const adminId = currentUser?.id || 1; // Default to admin ID 1 for testing
+
+      const approvedUser = await storage.approveUser(userId, adminId);
+      if (!approvedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User approved successfully", user: approvedUser });
+    } catch (error) {
+      console.error("Error approving user:", error);
+      res.status(500).json({ message: "Failed to approve user" });
+    }
+  });
+
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const success = await storage.deleteUser(userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User rejected and removed successfully" });
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      res.status(500).json({ message: "Failed to reject user" });
     }
   });
 
