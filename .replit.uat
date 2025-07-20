@@ -1,0 +1,29 @@
+# UAT Environment Configuration
+entrypoint = "server/index.ts"
+hidden = [".config", "package-lock.json"]
+
+[env]
+ENVIRONMENT_TYPE = "uat"
+NODE_ENV = "development"
+EMAIL_VERIFICATION_ENABLED = "false"
+ADMIN_APPROVAL_REQUIRED = "false"
+STORAGE_TYPE = "memory"
+DEBUG = "true"
+LOG_LEVEL = "verbose"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["npm", "run", "dev"]
+deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx,*.json}"
+
+[languages.javascript.languageServer]
+start = "typescript-language-server --stdio"

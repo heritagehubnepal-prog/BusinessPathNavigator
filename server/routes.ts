@@ -29,6 +29,16 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Environment status endpoint
+  app.get('/environment-status', (req, res) => {
+    res.sendFile('environment-status.html', { root: process.cwd() });
+  });
+
+  // Environment API endpoint
+  app.get('/api/environment', async (req, res) => {
+    const { getCurrentEnvironment } = await import('../environment.config.js');
+    res.json(getCurrentEnvironment());
+  });
   // Get current authenticated user
   app.get("/api/auth/user", async (req, res) => {
     try {

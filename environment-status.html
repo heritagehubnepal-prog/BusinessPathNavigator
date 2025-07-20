@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mycopath Environment Status</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            margin: 0;
+            padding: 40px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .environments {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .env-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .env-card:hover {
+            transform: translateY(-5px);
+        }
+        .env-card.uat {
+            border: 3px solid #fbbf24;
+        }
+        .env-card.production {
+            border: 3px solid #ef4444;
+        }
+        .env-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .env-status {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        .feature-list {
+            text-align: left;
+            margin: 20px 0;
+        }
+        .feature-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .access-btn {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        .access-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .credentials {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-running {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        .status-stopped {
+            background: #ef4444;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍄 Mycopath Environment Management</h1>
+        <p style="text-align: center; font-size: 1.2em; opacity: 0.9;">
+            Mushroom Farm Management System - Environment Status Dashboard
+        </p>
+
+        <div class="environments">
+            <!-- UAT Environment -->
+            <div class="env-card uat">
+                <div class="env-title">
+                    🧪 UAT Environment
+                </div>
+                <div class="env-status">
+                    <span class="status-indicator status-running"></span>
+                    User Acceptance Testing
+                </div>
+                
+                <div class="feature-list">
+                    <div class="feature-item">✅ Email Verification: <strong>DISABLED</strong></div>
+                    <div class="feature-item">✅ Admin Approval: <strong>AUTO-APPROVE</strong></div>
+                    <div class="feature-item">✅ Storage: <strong>IN-MEMORY</strong></div>
+                    <div class="feature-item">✅ Debug Mode: <strong>ENABLED</strong></div>
+                    <div class="feature-item">✅ Session: <strong>24 HOURS</strong></div>
+                </div>
+
+                <div class="credentials">
+                    <strong>Test Credentials:</strong><br>
+                    Employee ID: TEST-001<br>
+                    Password: demo123
+                </div>
+
+                <a href="https://uat-mycopath.replit.app" class="access-btn" target="_blank">
+                    🔗 Access UAT Environment
+                </a>
+            </div>
+
+            <!-- Production Environment -->
+            <div class="env-card production">
+                <div class="env-title">
+                    🏭 Production Environment
+                </div>
+                <div class="env-status">
+                    <span class="status-indicator status-stopped"></span>
+                    Live Production System
+                </div>
+                
+                <div class="feature-list">
+                    <div class="feature-item">🔒 Email Verification: <strong>REQUIRED</strong></div>
+                    <div class="feature-item">🔒 Admin Approval: <strong>MANDATORY</strong></div>
+                    <div class="feature-item">🔒 Storage: <strong>POSTGRESQL</strong></div>
+                    <div class="feature-item">🔒 Debug Mode: <strong>DISABLED</strong></div>
+                    <div class="feature-item">🔒 Session: <strong>8 HOURS</strong></div>
+                </div>
+
+                <div class="credentials">
+                    <strong>Security Notice:</strong><br>
+                    Admin approval required<br>
+                    Real email verification
+                </div>
+
+                <a href="https://mycopath.replit.app" class="access-btn" target="_blank">
+                    🔗 Access Production Environment
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Environment Management Guidelines:</strong></p>
+            <p>• Use UAT for testing new features and rapid development</p>
+            <p>• Use Production for live business operations</p>
+            <p>• UAT data resets on restart - Production data is persistent</p>
+            <p>• Always test thoroughly in UAT before deploying to Production</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh status every 30 seconds
+        setInterval(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

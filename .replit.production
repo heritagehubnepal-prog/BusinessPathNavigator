@@ -1,0 +1,29 @@
+# Production Environment Configuration
+entrypoint = "server/index.ts"
+hidden = [".config", "package-lock.json"]
+
+[env]
+ENVIRONMENT_TYPE = "production"
+NODE_ENV = "production" 
+EMAIL_VERIFICATION_ENABLED = "true"
+ADMIN_APPROVAL_REQUIRED = "true"
+STORAGE_TYPE = "database"
+DEBUG = "false"
+LOG_LEVEL = "error"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["npm", "run", "start"]
+deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx,*.json}"
+
+[languages.javascript.languageServer]
+start = "typescript-language-server --stdio"

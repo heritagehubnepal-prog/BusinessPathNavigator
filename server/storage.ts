@@ -2453,12 +2453,17 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Choose storage based on environment
-const isUAT = process.env.NODE_ENV === 'development';
-export const storage = isUAT ? new MemStorage() : new DatabaseStorage();
+// Environment-aware storage selection
+import { getCurrentEnvironment, isUAT } from '../environment.config.js';
 
-if (isUAT) {
-  console.log("🧪 UAT Mode: Using in-memory storage with auto-approval");
-} else {
-  console.log("🏭 Production Mode: Using database storage with email verification");
-}
+const currentEnv = getCurrentEnvironment();
+export const storage = isUAT() ? new MemStorage() : new DatabaseStorage();
+
+// Environment status logging
+console.log(`\n🌍 Environment: ${currentEnv.displayName}`);
+console.log(`📝 ${currentEnv.description}`);
+console.log(`💾 Storage: ${currentEnv.features.storage.toUpperCase()}`);
+console.log(`📧 Email Verification: ${currentEnv.features.emailVerification ? 'ENABLED' : 'DISABLED'}`);
+console.log(`👥 Admin Approval: ${currentEnv.features.adminApproval ? 'REQUIRED' : 'AUTO-APPROVE'}`);
+console.log(`🔍 Debug Mode: ${currentEnv.features.debugMode ? 'ON' : 'OFF'}`);
+console.log(`🌐 Domain: ${currentEnv.domain}\n`);
