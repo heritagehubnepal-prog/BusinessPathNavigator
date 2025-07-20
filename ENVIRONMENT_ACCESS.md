@@ -3,13 +3,14 @@
 ## Quick Access Dashboard
 
 ### Environment Status Monitor
-- **Local Status**: http://localhost:5000/environment-status
-- **API Status**: http://localhost:5000/api/environment
+- **Live Status Dashboard**: https://d8da8a8d-960e-4d64-88d8-44d2a6a46140-00-1xk929ofiiwtg.kirk.replit.dev/environment-status
+- **Environment API**: https://d8da8a8d-960e-4d64-88d8-44d2a6a46140-00-1xk929ofiiwtg.kirk.replit.dev/api/environment
+- **Application**: https://d8da8a8d-960e-4d64-88d8-44d2a6a46140-00-1xk929ofiiwtg.kirk.replit.dev
 
 ---
 
-## 🧪 UAT Environment
-**URL**: https://uat-mycopath.replit.app
+## 🧪 UAT Environment (Currently Active)
+**URL**: https://d8da8a8d-960e-4d64-88d8-44d2a6a46140-00-1xk929ofiiwtg.kirk.replit.dev
 - **Purpose**: User Acceptance Testing & Development
 - **Security**: Relaxed for testing
 - **Data**: In-memory (resets on restart)
