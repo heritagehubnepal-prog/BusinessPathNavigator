@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Role } from "@shared/schema";
 
 const registerSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().min(1, "First name is required"),
@@ -54,6 +55,7 @@ export default function AuthPage() {
   const registerForm = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      username: "",
       email: "",
       password: "",
       firstName: "",
@@ -99,11 +101,7 @@ export default function AuthPage() {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (data: z.infer<typeof registerSchema>) => {
-      // Add username as email for backend compatibility
-      return apiRequest("POST", "/api/auth/register", {
-        ...data,
-        username: data.email
-      });
+      return apiRequest("POST", "/api/auth/register", data);
     },
     onSuccess: (response) => {
       toast({
@@ -339,6 +337,23 @@ export default function AuthPage() {
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={registerForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                              <Input placeholder="Choose username" className="pl-10" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={registerForm.control}

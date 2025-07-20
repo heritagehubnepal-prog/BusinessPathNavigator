@@ -53,8 +53,13 @@ class AuthService {
         };
       }
 
-      // Use email as username for simplicity
-      data.username = data.email;
+      const existingUsername = await storage.getUserByUsername(data.username);
+      if (existingUsername) {
+        return {
+          success: false,
+          message: "Username is already taken"
+        };
+      }
 
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 12);
