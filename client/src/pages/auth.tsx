@@ -24,7 +24,7 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  emailOrEmployeeId: z.string().min(1, "Email or Employee ID is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -68,7 +68,7 @@ export default function AuthPage() {
   const loginForm = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      emailOrEmployeeId: "",
       password: "",
     },
   });
@@ -249,14 +249,14 @@ export default function AuthPage() {
                   <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
                     <FormField
                       control={loginForm.control}
-                      name="email"
+                      name="emailOrEmployeeId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Email or Employee ID</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                              <Input placeholder="your@email.com" className="pl-10" {...field} />
+                              <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                              <Input placeholder="your@email.com or EMP-001" className="pl-10" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />

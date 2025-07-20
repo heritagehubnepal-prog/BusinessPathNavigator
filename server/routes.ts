@@ -49,7 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserLastLogin(user.id);
 
       // Return user data without sensitive info
-      const { password, emailVerificationToken, passwordResetToken, ...safeUser } = user;
+      const { passwordHash, emailVerificationToken, passwordResetToken, ...safeUser } = user;
       res.json(safeUser);
     } catch (error) {
       console.error("Get user error:", error);
@@ -101,12 +101,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const loginSchema = z.object({
-        email: z.string().email(),
+        emailOrEmployeeId: z.string().min(1),
         password: z.string().min(1),
       });
 
       const validatedData = loginSchema.parse(req.body);
-      const result = await authService.loginUser(validatedData);
+      
+      // Determine if it's an email or Employee ID
+      const isEmail = validatedData.emailOrEmployeeId.includes('@');
+      const loginData = isEmail 
+        ? { email: validatedData.emailOrEmployeeId, password: validatedData.password }
+        : { employeeId: validatedData.emailOrEmployeeId, password: validatedData.password };
+      
+      const result = await authService.loginUser(loginData);
       
       if (result.success && result.user) {
         // Check if user is approved and active

@@ -19,7 +19,8 @@ interface RegisterData {
 }
 
 interface LoginData {
-  email: string;
+  email?: string;
+  employeeId?: string;
   password: string;
 }
 
@@ -72,7 +73,7 @@ class AuthService {
       const newUser = await storage.createUser({
         employeeId: data.employeeId,
         email: data.email,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         firstName: data.firstName,
         lastName: data.lastName,
         roleId: data.roleId || 6, // Default to Employee role
@@ -107,21 +108,27 @@ class AuthService {
 
   async loginUser(data: LoginData): Promise<AuthResult> {
     try {
-      // Find user by email
-      const user = await storage.getUserByEmail(data.email);
+      // Find user by email or Employee ID
+      let user;
+      if (data.email) {
+        user = await storage.getUserByEmail(data.email);
+      } else if (data.employeeId) {
+        user = await storage.getUserByEmployeeId(data.employeeId);
+      }
+      
       if (!user) {
         return {
           success: false,
-          message: "Invalid email or password"
+          message: "Invalid credentials"
         };
       }
 
       // Check password
-      const isPasswordValid = await bcrypt.compare(data.password, user.password);
+      const isPasswordValid = await bcrypt.compare(data.password, user.passwordHash);
       if (!isPasswordValid) {
         return {
           success: false,
-          message: "Invalid email or password"
+          message: "Invalid credentials"
         };
       }
 
