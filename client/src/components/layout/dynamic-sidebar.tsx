@@ -84,12 +84,15 @@ const menuStructure: MenuItem[] = [
   },
   { 
     id: "analytics", 
-    name: "Analytics & Reports", 
-    icon: BarChart,
-    children: [
-      { id: "analytics", name: "Analytics", href: "/analytics", icon: PieChart },
-      { id: "reports", name: "Reports", href: "/reports", icon: FileText },
-    ]
+    name: "Analytics", 
+    href: "/analytics", 
+    icon: PieChart 
+  },
+  { 
+    id: "reports", 
+    name: "Reports", 
+    href: "/reports", 
+    icon: FileText 
   },
 ];
 
