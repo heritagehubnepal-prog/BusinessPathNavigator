@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { authService } from "./authService";
 import {
@@ -18,6 +19,14 @@ import {
   insertPayrollSchema,
 } from "@shared/schema";
 import { z } from "zod";
+
+// Authentication middleware
+const isAuthenticated = (req: any, res: any, next: any) => {
+  if (!req.session?.user) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  next();
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get current authenticated user
@@ -296,6 +305,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error rejecting user:", error);
       res.status(500).json({ message: "Failed to reject user" });
+    }
+  });
+
+  // User rejection endpoint
+  app.post("/api/users/:id/reject", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const rejectedBy = req.user?.id;
+      
+      if (!rejectedBy) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = await storage.rejectUser(userId, rejectedBy);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "User rejected successfully", user });
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      res.status(500).json({ message: "Failed to reject user" });
+    }
+  });
+
+  // User deactivation endpoint
+  app.post("/api/users/:id/deactivate", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const deactivatedBy = req.user?.id;
+      const { reason } = req.body;
+      
+      if (!deactivatedBy) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = await storage.deactivateUser(userId, deactivatedBy, reason);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "User deactivated successfully", user });
+    } catch (error) {
+      console.error("Error deactivating user:", error);
+      res.status(500).json({ message: "Failed to deactivate user" });
+    }
+  });
+
+  // User activation endpoint
+  app.post("/api/users/:id/activate", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const activatedBy = req.user?.id;
+      
+      if (!activatedBy) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = await storage.activateUser(userId, activatedBy);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "User activated successfully", user });
+    } catch (error) {
+      console.error("Error activating user:", error);
+      res.status(500).json({ message: "Failed to activate user" });
+    }
+  });
+
+  // Update user endpoint
+  app.patch("/api/users/:id", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      // Remove sensitive fields that shouldn't be updated via this endpoint
+      delete updateData.password;
+      delete updateData.emailVerificationToken;
+      delete updateData.passwordResetToken;
+      
+      const user = await storage.updateUser(userId, updateData);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "User updated successfully", user });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Reset user password endpoint
+  app.post("/api/users/:id/reset-password", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const user = await storage.resetUserPassword(userId, hashedPassword);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "Password reset successfully", user });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
     }
   });
 

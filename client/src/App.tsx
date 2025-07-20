@@ -17,9 +17,10 @@ import Locations from "@/pages/locations";
 import HRPage from "@/pages/hr";
 import RolesManagement from "@/pages/roles";
 import UsersPage from "@/pages/users";
+import UserManagementPage from "@/pages/user-management";
 import AuthPage from "@/pages/auth";
 import UserApproval from "@/pages/user-approval";
-import Sidebar from "@/components/layout/sidebar";
+import DynamicSidebar from "@/components/layout/dynamic-sidebar";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -48,7 +49,7 @@ function Router() {
   // Show main app if authenticated
   return (
     <div className="flex h-screen">
-      <Sidebar />
+      <DynamicSidebar />
       <div className="flex-1 overflow-auto">
         <Switch>
           <Route path="/" component={Dashboard} />
@@ -61,7 +62,8 @@ function Router() {
           <Route path="/locations" component={Locations} />
           <Route path="/hr" component={HRPage} />
           <Route path="/roles" component={RolesManagement} />
-          <Route path="/users" component={UsersPage} />
+          <Route path="/users" component={UserManagementPage} />
+          <Route path="/user-management" component={UserManagementPage} />
           <Route path="/user-approval" component={UserApproval} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/analytics" component={Analytics} />

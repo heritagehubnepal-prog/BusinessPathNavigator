@@ -1564,6 +1564,106 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
+  async activateUser(id: number, activatedBy: number): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ 
+        isActive: true,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+      
+    if (user) {
+      await this.createActivity({
+        type: "user_activated",
+        description: `User ${user.firstName} ${user.lastName} (${user.employeeId}) activated by administrator`,
+        entityId: id,
+        entityType: "user",
+      });
+    }
+    
+    return user;
+  }
+
+  async deactivateUser(id: number, deactivatedBy: number, reason?: string): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ 
+        isActive: false,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+      
+    if (user) {
+      await this.createActivity({
+        type: "user_deactivated",
+        description: `User ${user.firstName} ${user.lastName} (${user.employeeId}) deactivated by administrator${reason ? `: ${reason}` : ''}`,
+        entityId: id,
+        entityType: "user",
+      });
+    }
+    
+    return user;
+  }
+
+  async rejectUser(id: number, rejectedBy: number): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ 
+        isApprovedByAdmin: false,
+        isActive: false,
+        registrationStatus: 'rejected',
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+      
+    if (user) {
+      await this.createActivity({
+        type: "user_rejected",
+        description: `User ${user.firstName} ${user.lastName} (${user.employeeId}) rejected by administrator`,
+        entityId: id,
+        entityType: "user",
+      });
+    }
+    
+    return user;
+  }
+
+  async updateUser(id: number, updateData: Partial<User>): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ 
+        ...updateData,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+      
+    return user;
+  }
+
+  async resetUserPassword(id: number, newHashedPassword: string): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ 
+        password: newHashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+      
+    if (user) {
+      await this.createActivity({
+        type: "password_reset",
+        description: `Password reset for user ${user.firstName} ${user.lastName} (${user.employeeId})`,
+        entityId: id,
+        entityType: "user",
+      });
+    }
+    
+    return user;
+  }
+
   // Production Batches
   async getProductionBatches(): Promise<ProductionBatch[]> {
     return await db.select().from(productionBatches).orderBy(desc(productionBatches.createdAt));
