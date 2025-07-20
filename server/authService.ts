@@ -65,29 +65,63 @@ class AuthService {
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 12);
 
-      // Generate verification token
-      const verificationToken = this.generateToken();
-      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      // Check environment for UAT mode
+      const isUAT = process.env.NODE_ENV === 'development' || process.env.ENVIRONMENT === 'uat';
+      
+      let userData: any;
+      
+      if (isUAT) {
+        // UAT Environment: Skip email verification, auto-approve
+        userData = {
+          employeeId: data.employeeId,
+          email: data.email,
+          passwordHash: hashedPassword,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          roleId: data.roleId || 6, // Default to Employee role
+          isEmailVerified: true, // Auto-verified in UAT
+          isActive: true,
+          isApprovedByAdmin: true, // Auto-approved in UAT
+          registrationStatus: "approved",
+          approvedBy: "System (UAT)",
+          approvedAt: new Date(),
+        };
+      } else {
+        // Production Environment: Require email verification and admin approval
+        const verificationToken = this.generateToken();
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+        
+        userData = {
+          employeeId: data.employeeId,
+          email: data.email,
+          passwordHash: hashedPassword,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          roleId: data.roleId || 6, // Default to Employee role
+          isEmailVerified: false,
+          emailVerificationToken: verificationToken,
+          emailVerificationExpires: verificationExpires,
+          isActive: true,
+          isApprovedByAdmin: false, // Requires admin approval
+          registrationStatus: "pending",
+        };
+      }
 
-      // Create user (inactive until admin approval)
-      const newUser = await storage.createUser({
-        employeeId: data.employeeId,
-        email: data.email,
-        passwordHash: hashedPassword,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        roleId: data.roleId || 6, // Default to Employee role
-        isEmailVerified: false,
-        emailVerificationToken: verificationToken,
-        emailVerificationExpires: verificationExpires,
-      });
+      // Create user
+      const newUser = await storage.createUser(userData);
 
-      // Send verification email
-      await emailService.sendVerificationEmail(data.email, verificationToken, data.firstName || data.username);
+      if (!isUAT) {
+        // Send verification email only in production
+        await emailService.sendVerificationEmail(data.email, userData.emailVerificationToken, data.firstName || data.username);
+      }
+
+      const message = isUAT 
+        ? "Registration successful! You can now log in immediately (UAT Mode)."
+        : "Registration successful! Please check your email to verify your account.";
 
       return {
         success: true,
-        message: "Registration successful! Please check your email to verify your account.",
+        message,
         user: {
           id: newUser.id,
           username: newUser.username,

@@ -45,6 +45,9 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Check if we're in UAT mode
+  const isUAT = import.meta.env.MODE === 'development';
 
   // Fetch roles for registration
   const { data: roles = [] } = useQuery<Role[]>({
@@ -305,6 +308,12 @@ export default function AuthPage() {
                 <div className="text-center mb-4">
                   <h2 className="text-xl font-semibold text-gray-800">Create Account</h2>
                   <p className="text-gray-600 text-sm">Join the Mycopath team</p>
+                  {isUAT && (
+                    <div className="mt-2 px-3 py-1 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 text-xs font-medium">
+                      <AlertCircle className="w-3 h-3 inline mr-1" />
+                      UAT Mode: Email verification disabled, auto-approval enabled
+                    </div>
+                  )}
                 </div>
 
                 <Form {...registerForm}>

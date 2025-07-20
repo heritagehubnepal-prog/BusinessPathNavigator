@@ -38,7 +38,7 @@ export const roles = pgTable("roles", {
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   employeeId: varchar("employee_id", { length: 20 }).notNull().unique(), // HR-assigned Employee ID
-  password: text("password").notNull(),
+  passwordHash: text("password_hash"),
   email: text("email").unique(),
   firstName: text("first_name"),
   lastName: text("last_name"),

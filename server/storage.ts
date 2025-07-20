@@ -192,6 +192,8 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private locations: Map<number, Location>;
   private users: Map<number, User>;
+  private roles: Map<number, Role>;
+  private userProfiles: Map<number, UserProfile>;
   private productionBatches: Map<number, ProductionBatch>;
   private inventory: Map<number, Inventory>;
   private financialTransactions: Map<number, FinancialTransaction>;
@@ -206,10 +208,13 @@ export class MemStorage implements IStorage {
   private attendance: Map<number, Attendance>;
   private payroll: Map<number, Payroll>;
   private currentId: number;
+  private roleIdCounter: number;
 
   constructor() {
     this.locations = new Map();
     this.users = new Map();
+    this.roles = new Map();
+    this.userProfiles = new Map();
     this.productionBatches = new Map();
     this.inventory = new Map();
     this.financialTransactions = new Map();
@@ -224,6 +229,7 @@ export class MemStorage implements IStorage {
     this.attendance = new Map();
     this.payroll = new Map();
     this.currentId = 1;
+    this.roleIdCounter = 1;
     
     // Initialize with some default data
     this.initializeDefaultData();
@@ -1547,6 +1553,121 @@ export class MemStorage implements IStorage {
   async deletePayroll(id: number): Promise<boolean> {
     return this.payroll.delete(id);
   }
+
+  // Role Management
+  async getRoles(): Promise<Role[]> {
+    return Array.from(this.roles.values());
+  }
+
+  async getRole(id: number): Promise<Role | undefined> {
+    return this.roles.get(id);
+  }
+
+  async getRoleByName(name: string): Promise<Role | undefined> {
+    for (const role of this.roles.values()) {
+      if (role.name === name) {
+        return role;
+      }
+    }
+    return undefined;
+  }
+
+  async createRole(roleData: InsertRole): Promise<Role> {
+    const id = this.roleIdCounter++;
+    const role: Role = {
+      id,
+      ...roleData,
+      createdAt: new Date(),
+    };
+    this.roles.set(id, role);
+    return role;
+  }
+
+  async updateRole(id: number, updateRole: Partial<InsertRole>): Promise<Role | undefined> {
+    const existing = this.roles.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updateRole };
+    this.roles.set(id, updated);
+    return updated;
+  }
+
+  async deleteRole(id: number): Promise<boolean> {
+    return this.roles.delete(id);
+  }
+
+  // User Profile Management
+  async getUserProfiles(): Promise<UserProfile[]> {
+    return Array.from(this.userProfiles.values());
+  }
+
+  async getUserProfile(id: number): Promise<UserProfile | undefined> {
+    return this.userProfiles.get(id);
+  }
+
+  async getUserProfileByUserId(userId: number): Promise<UserProfile | undefined> {
+    for (const profile of this.userProfiles.values()) {
+      if (profile.userId === userId) {
+        return profile;
+      }
+    }
+    return undefined;
+  }
+
+  async createUserProfile(profileData: InsertUserProfile): Promise<UserProfile> {
+    const id = this.currentId++;
+    const profile: UserProfile = {
+      id,
+      ...profileData,
+      createdAt: new Date(),
+    };
+    this.userProfiles.set(id, profile);
+    return profile;
+  }
+
+  async updateUserProfile(id: number, updateProfile: Partial<InsertUserProfile>): Promise<UserProfile | undefined> {
+    const existing = this.userProfiles.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updateProfile };
+    this.userProfiles.set(id, updated);
+    return updated;
+  }
+
+  async deleteUserProfile(id: number): Promise<boolean> {
+    return this.userProfiles.delete(id);
+  }
+
+  // Enhanced User Methods with Role Support
+  async getUserWithRole(id: number): Promise<(User & { role?: Role; profile?: UserProfile }) | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const role = user.roleId ? this.roles.get(user.roleId) : undefined;
+    const profile = await this.getUserProfileByUserId(id);
+    
+    return { ...user, role, profile };
+  }
+
+  async getUsersWithRoles(): Promise<(User & { role?: Role; profile?: UserProfile })[]> {
+    const usersWithRoles = [];
+    for (const user of this.users.values()) {
+      const role = user.roleId ? this.roles.get(user.roleId) : undefined;
+      const profile = await this.getUserProfileByUserId(user.id);
+      usersWithRoles.push({ ...user, role, profile });
+    }
+    return usersWithRoles.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+
+  async updateUserRole(userId: number, roleId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    user.roleId = roleId;
+    user.updatedAt = new Date();
+    this.users.set(userId, user);
+    return user;
+  }
 }
 
 // Use DatabaseStorage for persistent storage
@@ -2332,4 +2453,12 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Choose storage based on environment
+const isUAT = process.env.NODE_ENV === 'development';
+export const storage = isUAT ? new MemStorage() : new DatabaseStorage();
+
+if (isUAT) {
+  console.log("🧪 UAT Mode: Using in-memory storage with auto-approval");
+} else {
+  console.log("🏭 Production Mode: Using database storage with email verification");
+}
