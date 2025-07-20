@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import BatchForm from "@/components/forms/batch-form";
+import BatchEditForm from "@/components/forms/batch-edit-form";
+import { useAuth } from "@/hooks/useAuth";
 import type { ProductionBatch } from "@shared/schema";
 
 const getStatusColor = (status: string) => {
@@ -41,10 +43,18 @@ const calculateProgress = (startDate: string, expectedHarvestDate?: string) => {
 
 export default function Production() {
   const [showBatchForm, setShowBatchForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState<ProductionBatch | null>(null);
+  const { user } = useAuth();
   
   const { data: batches = [], isLoading } = useQuery<ProductionBatch[]>({
     queryKey: ["/api/production-batches"],
   });
+
+  const handleEditBatch = (batch: ProductionBatch) => {
+    setSelectedBatch(batch);
+    setShowEditForm(true);
+  };
 
   const activeBatches = batches.filter(
     batch => batch.status !== "harvested" && batch.status !== "contaminated"
@@ -195,7 +205,11 @@ export default function Production() {
                         {batch.harvestedWeight ? `${batch.harvestedWeight}kg` : "-"}
                       </TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditBatch(batch)}
+                        >
                           Edit
                         </Button>
                       </TableCell>
@@ -209,6 +223,13 @@ export default function Production() {
       </main>
 
       <BatchForm open={showBatchForm} onOpenChange={setShowBatchForm} />
+      
+      <BatchEditForm
+        open={showEditForm}
+        onOpenChange={setShowEditForm}
+        batch={selectedBatch}
+        userRole={user?.role || "worker"}
+      />
     </div>
   );
 }

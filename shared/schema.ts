@@ -98,6 +98,15 @@ export const productionBatches = pgTable("production_batches", {
   harvestedWeight: decimal("harvested_weight", { precision: 10, scale: 2 }),
   contaminationRate: decimal("contamination_rate", { precision: 5, scale: 2 }),
   notes: text("notes"),
+  // Management Control Fields
+  createdBy: varchar("created_by", { length: 50 }), // Employee who created this batch
+  lastModifiedBy: varchar("last_modified_by", { length: 50 }), // Employee who last modified
+  requiresApproval: boolean("requires_approval").default(false), // Flagged for management review
+  isApproved: boolean("is_approved").default(false), // Approved by management
+  approvedBy: varchar("approved_by", { length: 50 }), // Manager who approved
+  approvedAt: timestamp("approved_at"),
+  riskLevel: varchar("risk_level", { length: 20 }).default("low"), // low, medium, high
+  qualityCheckStatus: varchar("quality_check_status", { length: 20 }).default("pending"), // pending, passed, failed
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -623,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/production-batches/:id", async (req, res) => {
+  app.patch("/api/production-batches/:id", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertProductionBatchSchema.partial().parse(req.body);
@@ -633,7 +633,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(batch);
     } catch (error) {
-      res.status(400).json({ message: "Invalid batch data", error });
+      console.error("Production batch update error:", error);
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const zodError = error as any;
+        const issues = zodError.issues || [];
+        
+        if (issues.length > 0) {
+          const firstError = issues[0];
+          let userMessage = "";
+          
+          switch (firstError.path[0]) {
+            case "batchNumber":
+              userMessage = "Please enter a batch number (example: BATCH-001)";
+              break;
+            case "productType":
+              userMessage = "Please select a product type from the dropdown menu";
+              break;
+            case "substrate":
+              userMessage = "Please select a substrate type";
+              break;
+            case "status":
+              userMessage = "Please select a valid status";
+              break;
+            case "startDate":
+              userMessage = "Please select a valid start date";
+              break;
+            case "expectedHarvestDate":
+              userMessage = "Please select a valid expected harvest date";
+              break;
+            case "initialWeight":
+              userMessage = "Please enter a valid initial weight";
+              break;
+            case "harvestedWeight":
+              userMessage = "Please enter a valid harvested weight";
+              break;
+            case "contaminationRate":
+              userMessage = "Please enter a valid contamination rate (0-100%)";
+              break;
+            default:
+              userMessage = firstError.message;
+          }
+          
+          res.status(400).json({ 
+            message: userMessage,
+            field: firstError.path[0]
+          });
+        } else {
+          res.status(400).json({ message: "Please check all required fields and try again" });
+        }
+      } else {
+        res.status(500).json({ message: "Unable to update production batch. Please try again." });
+      }
     }
   });
 
