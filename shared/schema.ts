@@ -411,7 +411,7 @@ export const insertProductionBatchSchema = createInsertSchema(productionBatches)
   id: true,
   createdAt: true,
 }).extend({
-  batchNumber: z.string().min(1, "Please enter a batch number (e.g., M-001)"),
+  batchNumber: z.string().optional(), // Auto-generated if not provided
   productType: z.string().min(1, "Please select a mushroom type (Pink Oyster, Grey Oyster, etc.)"), 
   substrate: z.string().min(1, "Please select substrate type (Rice Straw, Sawdust, etc.)"),
   startDate: z.union([

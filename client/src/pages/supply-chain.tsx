@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Truck, Package, Recycle, ShoppingCart, Factory, Users, TrendingUp } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import SupplyChainQuickForm from "@/components/forms/supply-chain-quick-form";
 
 const STAGE_FLOW = [
   { key: "farmer_delivery", name: "Farmer Delivery", icon: Truck, color: "bg-blue-500" },
@@ -129,6 +130,19 @@ export default function SupplyChain() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Quick Add Supply Chain Entry */}
+        <Card className="glass-card mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" />
+              Quick Entry - New Farmer Delivery
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SupplyChainQuickForm />
+          </CardContent>
+        </Card>
 
         {/* Supply Chain Flow Visualization */}
         <Card className="glass-card mb-8">

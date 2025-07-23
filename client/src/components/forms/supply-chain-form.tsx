@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Truck, Factory, Package, Recycle } from "lucide-react";
 
 const supplyChainSchema = z.object({
-  batchNumber: z.string().min(1, "Please enter a batch number"),
   farmerName: z.string().min(1, "Please enter farmer name"),
   farmerContact: z.string().optional(),
   productType: z.string().min(1, "Please select product type"),
@@ -59,21 +58,13 @@ export default function SupplyChainForm({ onSubmit, isLoading }: SupplyChainForm
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Batch Information</h3>
             
+            <div className="bg-blue-50 p-3 rounded-lg mb-4">
+              <p className="text-sm text-blue-700">
+                📋 <strong>Batch Number:</strong> Will be automatically generated (e.g., MYC-2025-001)
+              </p>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="batchNumber">Batch Number *</Label>
-                <Input
-                  id="batchNumber"
-                  {...form.register("batchNumber")}
-                  placeholder="e.g., MYC-2025-001"
-                />
-                {form.formState.errors.batchNumber && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.batchNumber.message}
-                  </p>
-                )}
-              </div>
-
               <div>
                 <Label htmlFor="productType">Product Type *</Label>
                 <Select onValueChange={(value) => form.setValue("productType", value)}>
@@ -94,28 +85,30 @@ export default function SupplyChainForm({ onSubmit, isLoading }: SupplyChainForm
                   </p>
                 )}
               </div>
+
+              <div>
+                <Label htmlFor="substrate">Substrate Type *</Label>
+                <Select onValueChange={(value) => form.setValue("substrate", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select substrate type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Rice Straw">Rice Straw</SelectItem>
+                    <SelectItem value="Wheat Straw">Wheat Straw</SelectItem>
+                    <SelectItem value="Sawdust">Sawdust</SelectItem>
+                    <SelectItem value="Cotton Waste">Cotton Waste</SelectItem>
+                    <SelectItem value="Mixed Substrate">Mixed Substrate</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.substrate && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.substrate.message}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="substrate">Substrate Type *</Label>
-              <Select onValueChange={(value) => form.setValue("substrate", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select substrate type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Rice Straw">Rice Straw</SelectItem>
-                  <SelectItem value="Wheat Straw">Wheat Straw</SelectItem>
-                  <SelectItem value="Sawdust">Sawdust</SelectItem>
-                  <SelectItem value="Cotton Waste">Cotton Waste</SelectItem>
-                  <SelectItem value="Mixed Substrate">Mixed Substrate</SelectItem>
-                </SelectContent>
-              </Select>
-              {form.formState.errors.substrate && (
-                <p className="text-red-500 text-sm mt-1">
-                  {form.formState.errors.substrate.message}
-                </p>
-              )}
-            </div>
+
           </div>
 
           {/* Farmer Information */}

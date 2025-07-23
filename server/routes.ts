@@ -626,6 +626,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/production-batches", isAuthenticated, async (req, res) => {
     try {
       console.log("Creating production batch with data:", req.body);
+      
+      // Auto-generate batch number if not provided
+      if (!req.body.batchNumber) {
+        const currentYear = new Date().getFullYear();
+        const existingBatches = await storage.getProductionBatches();
+        const currentYearBatches = existingBatches.filter(batch => 
+          batch.batchNumber?.startsWith(`MYC-${currentYear}`)
+        );
+        const nextNumber = currentYearBatches.length + 1;
+        req.body.batchNumber = `MYC-${currentYear}-${nextNumber.toString().padStart(3, '0')}`;
+      }
+      
       const validatedData = insertProductionBatchSchema.parse(req.body);
       const batch = await storage.createProductionBatch(validatedData);
       res.status(201).json(batch);
