@@ -29,47 +29,48 @@ const getStageColor = (stage: string) => {
   }
 };
 
-const getQuickProgressDefaults = (stage: string, user: any) => {
+const getQuickProgressDefaults = (stage: string, user: any, batch: any) => {
   const today = new Date().toISOString().split('T')[0];
   
+  // Smart defaults that preserve existing data and only add new stage-specific info
   switch (stage) {
     case "inoculation":
       return {
-        inoculationDate: today,
-        spawnAddedBy: user?.employeeId || "",
-        spawnQuantityGrams: 500,
-        spawnSupplier: "Local Supplier",
+        inoculationDate: batch.inoculationDate || today,
+        spawnAddedBy: batch.spawnAddedBy || user?.employeeId || "AUTO",
+        spawnQuantityGrams: batch.spawnQuantityGrams || 500,
+        spawnSupplier: batch.spawnSupplier || "Local Supplier",
         currentStage: "incubation",
       };
     case "incubation":
       return {
-        incubationStartDate: today,
-        incubationRoomTemp: 25,
-        incubationRoomHumidity: 85,
+        incubationStartDate: batch.incubationStartDate || today,
+        incubationRoomTemp: batch.incubationRoomTemp || 25,
+        incubationRoomHumidity: batch.incubationRoomHumidity || 85,
         currentStage: "fruiting",
       };
     case "fruiting":
       return {
-        fruitingStartDate: today,
-        fruitingRoomTemp: 18,
-        fruitingRoomHumidity: 90,
-        lightExposure: "LED 12 hours/day",
+        fruitingStartDate: batch.fruitingStartDate || today,
+        fruitingRoomTemp: batch.fruitingRoomTemp || 18,
+        fruitingRoomHumidity: batch.fruitingRoomHumidity || 90,
+        lightExposure: batch.lightExposure || "LED 12 hours/day",
         currentStage: "harvesting",
       };
     case "harvesting":
       return {
-        harvestDate: today,
-        harvestedWeightKg: 2.5,
-        damagedWeightKg: 0.1,
-        harvestedBy: user?.employeeId || "",
+        harvestDate: batch.harvestDate || today,
+        harvestedWeightKg: batch.harvestedWeightKg || 2.5,
+        damagedWeightKg: batch.damagedWeightKg || 0.1,
+        harvestedBy: batch.harvestedBy || user?.employeeId || "AUTO",
         currentStage: "post_harvest",
       };
     case "post_harvest":
       return {
-        postHarvestDate: today,
-        substrateCollectedKg: 1.8,
-        substrateCondition: "good",
-        myceliumReuseStatus: true,
+        postHarvestDate: batch.postHarvestDate || today,
+        substrateCollectedKg: batch.substrateCollectedKg || 1.8,
+        substrateCondition: batch.substrateCondition || "good",
+        myceliumReuseStatus: batch.myceliumReuseStatus ?? true,
         currentStage: "completed",
       };
     default:
@@ -121,9 +122,9 @@ export default function BatchProgressTracker({ batch, onStageUpdate }: BatchProg
   const quickProgressMutation = useMutation({
     mutationFn: async () => {
       setIsUpdating(true);
-      const defaultData = getQuickProgressDefaults(nextStage, user);
+      const defaultData = getQuickProgressDefaults(nextStage, user, batch);
       
-      console.log(`Quick progressing batch ${batch.id} to ${nextStage}:`, defaultData);
+      console.log(`Smart progressing batch ${batch.id} to ${nextStage} (preserving existing data):`, defaultData);
       const response = await apiRequest("PATCH", `/api/production-batches/${batch.id}`, defaultData);
       return response.json();
     },

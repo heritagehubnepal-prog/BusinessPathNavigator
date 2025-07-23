@@ -75,7 +75,7 @@ export default function BatchStageForm({ open, onOpenChange, batch, stage }: Bat
   const schema = stageSchemas[stage];
   const form = useForm({
     resolver: zodResolver(schema),
-    defaultValues: getDefaultValues(batch, stage),
+    values: getDefaultValues(batch, stage, user), // Dynamic values that update when batch data changes
   });
 
   const updateStageMutation = useMutation({
@@ -143,57 +143,59 @@ export default function BatchStageForm({ open, onOpenChange, batch, stage }: Bat
   );
 }
 
-function getDefaultValues(batch: ProductionBatch | null, stage: keyof typeof stageSchemas) {
+function getDefaultValues(batch: ProductionBatch | null, stage: keyof typeof stageSchemas, user: any) {
+  const today = new Date().toISOString().split('T')[0];
   const baseDefaults = {
     currentStage: getNextStage(stage),
   };
   
   if (!batch) return baseDefaults;
   
+  // Smart pre-population: Use existing data to avoid re-entry
   switch (stage) {
     case "inoculation":
       return {
         ...baseDefaults,
-        spawnAddedBy: "",
-        spawnQuantityGrams: "",
-        spawnSupplier: "",
-        inoculationDate: "",
-        inoculationNotes: "",
+        inoculationDate: batch.inoculationDate ? new Date(batch.inoculationDate).toISOString().split('T')[0] : today,
+        spawnAddedBy: batch.spawnAddedBy || user?.employeeId || "",
+        spawnQuantityGrams: batch.spawnQuantityGrams?.toString() || "500",
+        spawnSupplier: batch.spawnSupplier || "Local Supplier",
+        inoculationNotes: batch.inoculationNotes || "",
       };
     case "incubation":
       return {
         ...baseDefaults,
-        incubationStartDate: "",
-        incubationRoomTemp: "25",
-        incubationRoomHumidity: "85",
-        incubationNotes: "",
+        incubationStartDate: batch.incubationStartDate ? new Date(batch.incubationStartDate).toISOString().split('T')[0] : today,
+        incubationRoomTemp: batch.incubationRoomTemp?.toString() || "25",
+        incubationRoomHumidity: batch.incubationRoomHumidity?.toString() || "85",
+        incubationNotes: batch.incubationNotes || "",
       };
     case "fruiting":
       return {
         ...baseDefaults,
-        fruitingStartDate: "",
-        fruitingRoomTemp: "18",
-        fruitingRoomHumidity: "90",
-        lightExposure: "LED 12 hours/day",
-        fruitingNotes: "",
+        fruitingStartDate: batch.fruitingStartDate ? new Date(batch.fruitingStartDate).toISOString().split('T')[0] : today,
+        fruitingRoomTemp: batch.fruitingRoomTemp?.toString() || "18",
+        fruitingRoomHumidity: batch.fruitingRoomHumidity?.toString() || "90",
+        lightExposure: batch.lightExposure || "LED 12 hours/day",
+        fruitingNotes: batch.fruitingNotes || "",
       };
     case "harvesting":
       return {
         ...baseDefaults,
-        harvestDate: "",
-        harvestedWeightKg: "",
-        damagedWeightKg: "0",
-        harvestedBy: "",
-        harvestNotes: "",
+        harvestDate: batch.harvestDate ? new Date(batch.harvestDate).toISOString().split('T')[0] : today,
+        harvestedWeightKg: batch.harvestedWeightKg?.toString() || "",
+        damagedWeightKg: batch.damagedWeightKg?.toString() || "0",
+        harvestedBy: batch.harvestedBy || user?.employeeId || "",
+        harvestNotes: batch.harvestNotes || "",
       };
     case "post_harvest":
       return {
         ...baseDefaults,
-        postHarvestDate: "",
-        substrateCollectedKg: "",
-        substrateCondition: "dry",
-        myceliumReuseStatus: false,
-        postHarvestNotes: "",
+        postHarvestDate: batch.postHarvestDate ? new Date(batch.postHarvestDate).toISOString().split('T')[0] : today,
+        substrateCollectedKg: batch.substrateCollectedKg?.toString() || "",
+        substrateCondition: batch.substrateCondition || "good",
+        myceliumReuseStatus: batch.myceliumReuseStatus || false,
+        postHarvestNotes: batch.postHarvestNotes || "",
       };
     default:
       return baseDefaults;

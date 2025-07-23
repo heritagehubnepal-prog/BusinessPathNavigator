@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import BatchStageForm from "@/components/forms/batch-stage-form";
 import ContaminationForm from "@/components/forms/contamination-form";
 import BatchProgressTracker from "@/components/batch-progress-tracker";
+import WorkflowStageSummary from "@/components/workflow-stage-summary";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { ProductionBatch } from "@shared/schema";
