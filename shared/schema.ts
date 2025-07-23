@@ -88,7 +88,7 @@ export const productionBatches = pgTable("production_batches", {
   id: serial("id").primaryKey(),
   batchNumber: varchar("batch_number", { length: 50 }).notNull().unique(), // M-001, M-002
   productType: varchar("product_type", { length: 100 }).notNull(), // Pink Oyster, Grey Oyster
-  substrateType: varchar("substrate_type", { length: 100 }).notNull(), // Rice Straw, Sawdust
+  substrate: varchar("substrate", { length: 100 }).notNull(), // Rice Straw, Sawdust (changed from substrateType for compatibility)
   spawnType: varchar("spawn_type", { length: 100 }), // Local, Imported
   startDate: timestamp("start_date").notNull(),
   expectedHarvestDate: timestamp("expected_harvest_date"),
@@ -381,7 +381,7 @@ export const insertProductionBatchSchema = createInsertSchema(productionBatches)
 }).extend({
   batchNumber: z.string().min(1, "Please enter a batch number (e.g., M-001)"),
   productType: z.string().min(1, "Please select a mushroom type (Pink Oyster, Grey Oyster, etc.)"), 
-  substrateType: z.string().min(1, "Please select substrate type (Rice Straw, Sawdust, etc.)"),
+  substrate: z.string().min(1, "Please select substrate type (Rice Straw, Sawdust, etc.)"),
   startDate: z.union([
     z.string().transform(str => new Date(str)),
     z.date()
