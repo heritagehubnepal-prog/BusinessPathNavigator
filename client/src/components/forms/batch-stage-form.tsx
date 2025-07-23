@@ -183,7 +183,7 @@ function getDefaultValues(batch: ProductionBatch | null, stage: keyof typeof sta
         harvestDate: "",
         harvestedWeightKg: "",
         damagedWeightKg: "0",
-        harvestedBy: user?.employeeId || "",
+        harvestedBy: "",
         harvestNotes: "",
       };
     case "post_harvest":
@@ -362,7 +362,253 @@ function renderStageFields(stage: keyof typeof stageSchemas, form: any) {
         </div>
       );
       
-    // Similar patterns for other stages...
+    case "fruiting":
+      return (
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="fruitingStartDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fruiting Start Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="fruitingRoomTemp"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Room Temperature (°C)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="fruitingRoomHumidity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Room Humidity (%)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="lightExposure"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Light Exposure</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="e.g., LED 12 hours/day" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="fruitingNotes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      );
+      
+    case "harvesting":
+      return (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="harvestDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Harvest Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="harvestedBy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Harvested By</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Employee ID or Name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="harvestedWeightKg"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Harvested Weight (kg)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="damagedWeightKg"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Damaged Weight (kg)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="harvestNotes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Harvest Notes (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      );
+      
+    case "post_harvest":
+      return (
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="postHarvestDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Post-Harvest Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="substrateCollectedKg"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Substrate Collected (kg)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="substrateCondition"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Substrate Condition</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select condition" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="excellent">Excellent</SelectItem>
+                      <SelectItem value="good">Good</SelectItem>
+                      <SelectItem value="fair">Fair</SelectItem>
+                      <SelectItem value="poor">Poor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="myceliumReuseStatus"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <input
+                    type="checkbox"
+                    checked={field.value}
+                    onChange={field.onChange}
+                    className="mt-1"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Mycelium suitable for reuse
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="postHarvestNotes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Post-Harvest Notes (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      );
+      
     default:
       return <div>Form fields for {stage}</div>;
   }

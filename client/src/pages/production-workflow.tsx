@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import BatchStageForm from "@/components/forms/batch-stage-form";
 import ContaminationForm from "@/components/forms/contamination-form";
+import BatchProgressTracker from "@/components/batch-progress-tracker";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { ProductionBatch } from "@shared/schema";
@@ -59,7 +60,7 @@ export default function ProductionWorkflow() {
     queryKey: ["/api/production-batches"],
   });
 
-  const { data: contaminationLogs = [] } = useQuery({
+  const { data: contaminationLogs = [] } = useQuery<any[]>({
     queryKey: ["/api/contamination-logs"],
   });
 
@@ -101,7 +102,7 @@ export default function ProductionWorkflow() {
       <TableRow className={hasContamination ? "bg-red-50" : ""}>
         <TableCell className="font-medium">{batch.batchNumber}</TableCell>
         <TableCell>{batch.productType}</TableCell>
-        <TableCell>{batch.substrateType || batch.substrate}</TableCell>
+        <TableCell>{batch.substrateType}</TableCell>
         <TableCell>
           <div className="space-y-2">
             <Badge className={getStageColor(batch.currentStage || "batch_creation")}>
@@ -154,6 +155,29 @@ export default function ProductionWorkflow() {
       />
       
       <main className="p-6">
+        {/* Quick Progress Trackers for Active Batches */}
+        {activeBatches.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">🚀 One-Click Batch Progress Tracker</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {activeBatches.slice(0, 6).map((batch) => (
+                <BatchProgressTracker
+                  key={batch.id}
+                  batch={batch}
+                  onStageUpdate={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/production-batches"] });
+                  }}
+                />
+              ))}
+            </div>
+            {activeBatches.length > 6 && (
+              <p className="text-center text-gray-600 mt-4">
+                Showing 6 of {activeBatches.length} active batches. View all in the Active Batches tab below.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
