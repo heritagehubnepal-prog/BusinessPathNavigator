@@ -127,8 +127,40 @@ export const productionBatches = pgTable("production_batches", {
   myceliumReuseStatus: boolean("mycelium_reuse_status").default(false),
   postHarvestNotes: text("post_harvest_notes"),
   
-  // Current Stage Tracking
-  currentStage: varchar("current_stage", { length: 50 }).notNull().default("batch_creation"), // batch_creation, inoculation, incubation, fruiting, harvesting, post_harvest, completed
+  // Supply Chain Tracking - Full Mycopath Value Chain
+  currentStage: varchar("current_stage", { length: 50 }).notNull().default("farmer_delivery"), // farmer_delivery, hub_processing, harvesting, packaging, substrate_collection, mycelium_production, product_manufacturing, sales, completed
+  
+  // Farmer Integration Fields
+  farmerName: varchar("farmer_name", { length: 100 }),
+  farmerContact: varchar("farmer_contact", { length: 50 }),
+  deliveryDate: timestamp("delivery_date"),
+  farmerPaymentAmount: decimal("farmer_payment_amount", { precision: 10, scale: 2 }),
+  farmerPaymentStatus: varchar("farmer_payment_status", { length: 20 }).default("pending"), // pending, paid
+  
+  // Hub Processing
+  hubReceivalDate: timestamp("hub_receival_date"),
+  qualityGrade: varchar("quality_grade", { length: 20 }), // A, B, C grade
+  rejectedWeight: decimal("rejected_weight", { precision: 10, scale: 3 }),
+  acceptedWeight: decimal("accepted_weight", { precision: 10, scale: 3 }),
+  
+  // Packaging & Sales
+  packagingDate: timestamp("packaging_date"),
+  packagedUnits: integer("packaged_units"),
+  salesPrice: decimal("sales_price", { precision: 10, scale: 2 }),
+  salesDate: timestamp("sales_date"),
+  customerId: integer("customer_id"),
+  
+  // Substrate Collection & Mycelium Production
+  substrateCollectionDate: timestamp("substrate_collection_date"),
+  myceliumProductionStartDate: timestamp("mycelium_production_start_date"),
+  myceliumProductType: varchar("mycelium_product_type", { length: 100 }), // packaging, pots, fashion
+  myceliumUnitsProduced: integer("mycelium_units_produced"),
+  myceliumSalesPrice: decimal("mycelium_sales_price", { precision: 10, scale: 2 }),
+  
+  // Zero Waste Tracking
+  wasteGenerated: decimal("waste_generated", { precision: 10, scale: 3 }).default(0),
+  wasteUtilized: decimal("waste_utilized", { precision: 10, scale: 3 }).default(0),
+  zeroWasteAchieved: boolean("zero_waste_achieved").default(false),
   
   // Management Control Fields
   createdBy: varchar("created_by", { length: 50 }),

@@ -755,6 +755,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supply Chain Stage Advancement
+  app.post("/api/production-batches/:id/advance-stage", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { targetStage } = req.body;
+      
+      const batch = await storage.getProductionBatch(id);
+      if (!batch) {
+        return res.status(404).json({ message: "Production batch not found" });
+      }
+
+      // Define stage progression with default values
+      const stageDefaults: Record<string, any> = {
+        hub_processing: {
+          hubReceivalDate: new Date(),
+          qualityGrade: "A",
+          acceptedWeight: parseFloat(batch.initialWeight || "0") * 0.95, // 5% processing loss
+          rejectedWeight: parseFloat(batch.initialWeight || "0") * 0.05
+        },
+        harvesting: {
+          harvestDate: new Date(),
+          harvestedWeightKg: parseFloat(batch.acceptedWeight || "0") * 2.5, // 2.5x yield
+          harvestedBy: "Processing Team"
+        },
+        packaging: {
+          packagingDate: new Date(),
+          packagedUnits: Math.floor(parseFloat(batch.harvestedWeightKg || "0") / 0.25), // 250g packages
+          salesPrice: parseFloat(batch.harvestedWeightKg || "0") * 800 // NPR 800/kg
+        },
+        substrate_collection: {
+          substrateCollectionDate: new Date(),
+          substrateCollectedKg: parseFloat(batch.initialWeight || "0") * 0.8 // 80% substrate recovery
+        },
+        mycelium_production: {
+          myceliumProductionStartDate: new Date(),
+          myceliumProductType: "Packaging Material",
+          myceliumUnitsProduced: Math.floor(parseFloat(batch.substrateCollectedKg || "0") / 2) // 1 unit per 2kg substrate
+        },
+        product_manufacturing: {
+          myceliumSalesPrice: (parseFloat(batch.myceliumUnitsProduced || "0") * 150) // NPR 150 per unit
+        },
+        sales: {
+          salesDate: new Date()
+        },
+        completed: {
+          zeroWasteAchieved: true,
+          wasteUtilized: parseFloat(batch.wasteGenerated || "0")
+        }
+      };
+
+      const updateData = {
+        currentStage: targetStage,
+        ...stageDefaults[targetStage]
+      };
+
+      const updatedBatch = await storage.updateProductionBatch(id, updateData);
+      
+      // Log activity
+      await storage.createActivity({
+        type: "stage_advancement",
+        description: `Batch ${batch.batchNumber} advanced to ${targetStage}`,
+        entityId: id,
+        entityType: "production_batch"
+      });
+
+      res.json(updatedBatch);
+    } catch (error) {
+      console.error("Stage advancement error:", error);
+      res.status(500).json({ message: "Failed to advance stage" });
+    }
+  });
+
   // Inventory
   app.get("/api/inventory", async (req, res) => {
     try {

@@ -24,7 +24,8 @@ import {
   DollarSign,
   ClipboardCheck,
   BarChart,
-  Database
+  Database,
+  Truck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,6 +52,7 @@ const menuStructure: MenuItem[] = [
     icon: Factory,
     children: [
       { id: "production", name: "Production", href: "/production", icon: Factory },
+      { id: "supply-chain", name: "Supply Chain", href: "/supply-chain", icon: Truck },
       { id: "inventory", name: "Inventory", href: "/inventory", icon: Package },
       { id: "locations", name: "Locations", href: "/locations", icon: MapPin },
     ]
