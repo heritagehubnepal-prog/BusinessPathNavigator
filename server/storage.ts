@@ -1041,9 +1041,23 @@ export class MemStorage implements IStorage {
 
   async createProductionBatch(insertBatch: InsertProductionBatch): Promise<ProductionBatch> {
     const id = this.currentId++;
+    
+    // Auto-generate batch number if not provided
+    let batchNumber = insertBatch.batchNumber;
+    if (!batchNumber) {
+      const currentYear = new Date().getFullYear();
+      const existingBatches = Array.from(this.productionBatches.values());
+      const currentYearBatches = existingBatches.filter(b => 
+        b.batchNumber?.startsWith(`MYC-${currentYear}`)
+      );
+      const nextNumber = currentYearBatches.length + 1;
+      batchNumber = `MYC-${currentYear}-${nextNumber.toString().padStart(3, '0')}`;
+    }
+
     const batch: ProductionBatch = { 
       ...insertBatch, 
       id, 
+      batchNumber: batchNumber!,
       locationId: insertBatch.locationId || null,
       createdAt: new Date(),
       expectedHarvestDate: insertBatch.expectedHarvestDate || null,
@@ -1999,7 +2013,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProductionBatch(insertBatch: InsertProductionBatch): Promise<ProductionBatch> {
-    const [batch] = await db.insert(productionBatches).values(insertBatch).returning();
+    // Auto-generate batch number if not provided
+    let finalBatch = { ...insertBatch };
+    if (!finalBatch.batchNumber) {
+      const currentYear = new Date().getFullYear();
+      const batches = await this.getProductionBatches();
+      const currentYearBatches = batches.filter(b => 
+        b.batchNumber?.startsWith(`MYC-${currentYear}`)
+      );
+      const nextNumber = currentYearBatches.length + 1;
+      finalBatch.batchNumber = `MYC-${currentYear}-${nextNumber.toString().padStart(3, '0')}`;
+    }
+
+    const [batch] = await db.insert(productionBatches).values(finalBatch).returning();
     
     await this.createActivity({
       type: "batch_created",
