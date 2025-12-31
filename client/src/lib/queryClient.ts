@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -47,8 +48,8 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes for real-time updates
-      gcTime: 1000 * 60 * 10, // 10 minutes cache
+      staleTime: 1000 * 60 * 60 * 24, // 24 hours (for offline-first)
+      gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days cache
       retry: (failureCount, error) => {
         if (error instanceof Error && error.message.includes('404')) {
           return false;
@@ -58,7 +59,13 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: 'always',
     },
     mutations: {
-      retry: 1,
+      retry: 3, // More retries for flaky connections
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
+});
+
+export const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+  key: 'MYCOPATH_OFFLINE_CACHE',
 });
