@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Bell, Wifi, WifiOff, CloudCheck } from "lucide-react";
+import { Plus, Bell, WifiOff, Cloud } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface HeaderProps {
@@ -34,7 +34,7 @@ export default function Header({ title, subtitle, onAction, actionLabel }: Heade
             <h2 className="text-2xl font-bold text-slate">{title}</h2>
             {isOnline ? (
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1 px-2 py-0">
-                <CloudCheck className="w-3 h-3" />
+                <Cloud className="w-3 h-3" />
                 <span className="text-[10px] uppercase font-bold">Synced</span>
               </Badge>
             ) : (
