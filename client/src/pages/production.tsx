@@ -124,7 +124,7 @@ export default function Production() {
                         </p>
                       </div>
                       <Badge className={getStatusColor(batch.status)}>
-                        {batch.status.charAt(0).toUpperCase() + batch.status.slice(1)}
+                        {(batch.status || "unknown").charAt(0).toUpperCase() + (batch.status || "unknown").slice(1)}
                       </Badge>
                     </div>
                     
@@ -197,7 +197,7 @@ export default function Production() {
                       <TableCell>{batch.productType}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(batch.status)}>
-                          {batch.status.charAt(0).toUpperCase() + batch.status.slice(1)}
+                          {(batch.status || "unknown").charAt(0).toUpperCase() + (batch.status || "unknown").slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell>{new Date(batch.startDate).toLocaleDateString()}</TableCell>
